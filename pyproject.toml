@@ -1,0 +1,22 @@
+[project]
+name = "whats-that-smoke"
+version = "0.1.0"
+description = "Bounded diagnostics for a Freenove FNK0043 Raspberry Pi car"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.116",
+    "rpi-ws281x>=5.0",
+    "smbus2>=0.5",
+    "spidev>=3.8",
+    "uvicorn>=0.35",
+    "websockets>=15",
+]
+
+[project.scripts]
+wts = "whats_that_smoke:main"
+wts-dashboard = "whats_that_smoke.web:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
