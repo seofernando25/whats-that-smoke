@@ -99,35 +99,15 @@ class ArucoFollower:
         dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         parameters = cv2.aruco.DetectorParameters()
         parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
-        # Recall-oriented settings for distant 50 mm tags. ArUco3's default
-        # minimum-size shortcut rejected markers below roughly 40 px at 640p.
-        parameters.minMarkerPerimeterRate = 0.005
-        parameters.adaptiveThreshWinSizeMin = 3
-        parameters.adaptiveThreshWinSizeMax = 53
-        parameters.adaptiveThreshWinSizeStep = 4
+        # Keep the normal threshold sweep: it finds the live small tags in a
+        # few milliseconds. Very permissive sweeps cost hundreds of ms/frame.
         parameters.minCornerDistanceRate = 0.01
         parameters.minDistanceToBorder = 1
         parameters.errorCorrectionRate = 0.8
         if hasattr(parameters, "useAruco3Detection"):
             parameters.useAruco3Detection = False
         detector = cv2.aruco.ArucoDetector(dictionary, parameters)
-        # Most frames succeed on the original. Contrast and 2x passes are only
-        # attempted on misses, preserving latency while recovering small tags.
-        passes = [(image, 1.0)]
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(image)
-        passes.append((clahe, 1.0))
-        enlarged = cv2.resize(clahe, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        enlarged = cv2.GaussianBlur(enlarged, (0, 0), 0.7)
-        passes.append((enlarged, 2.0))
-
-        corners = []
-        ids = None
-        coordinate_scale = 1.0
-        for candidate_image, scale in passes:
-            corners, ids, _ = detector.detectMarkers(candidate_image)
-            if ids is not None:
-                coordinate_scale = scale
-                break
+        corners, ids, _ = detector.detectMarkers(image)
         if ids is None:
             return None
         candidates: list[Detection] = []
@@ -135,7 +115,7 @@ class ArucoFollower:
             tag_id = int(raw_id)
             if tag_id not in ALLOWED_IDS:
                 continue
-            points = raw_corners.reshape(4, 2) / coordinate_scale
+            points = raw_corners.reshape(4, 2)
             edges = [math.dist(points[i], points[(i + 1) % 4]) for i in range(4)]
             size_px = sum(edges) / 4
             if size_px < 7:
@@ -162,7 +142,7 @@ class ArucoFollower:
 
     async def run(self) -> None:
         while True:
-            await asyncio.sleep(0.10)
+            await asyncio.sleep(0.045)
             if not self.enabled:
                 continue
             frame, sequence = self.camera.latest()
@@ -174,6 +154,11 @@ class ArucoFollower:
             self.last_sequence = sequence
             detection = await asyncio.to_thread(self.detect, frame)
             if detection is None:
+                # A tiny/distant marker may miss an individual compressed
+                # frame. Preserve the previous overlay/command briefly rather
+                # than visually flickering or braking at every isolated miss.
+                if time.monotonic() - self.last_detection_at <= 0.20:
+                    continue
                 self.clear_detection("aruco-searching")
                 if self.follow:
                     await self.controller.stop("aruco-tag-lost", release=False)
