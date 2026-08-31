@@ -25,6 +25,7 @@ class Detection:
     center_y: float
     size_px: float
     distance_m: float
+    tracked: bool = False
 
 
 class ArucoFollower:
@@ -37,6 +38,10 @@ class ArucoFollower:
         self.task: asyncio.Task[None] | None = None
         self.last_sequence = -1
         self.last_detection_at = 0.0
+        self.previous_gray: Any | None = None
+        self.tracks: dict[int, tuple[Detection, float]] = {}
+        self.target_id: int | None = None
+        self.filter_state: tuple[float, float, float, float, float] | None = None
 
     def start(self) -> None:
         self.task = asyncio.create_task(self.run(), name="aruco-follower")
@@ -88,6 +93,60 @@ class ArucoFollower:
         state.aruco_corners = []
         state.aruco_markers = []
         state.aruco_status = status
+        self.previous_gray = None
+        self.tracks.clear()
+        self.target_id = None
+        self.filter_state = None
+
+    def filter_target(self, detection: Detection, now: float) -> tuple[float, float]:
+        """Responsive constant-velocity alpha-beta filter for control state."""
+        if self.filter_state is None:
+            self.filter_state = (detection.center_x, detection.distance_m, 0.0, 0.0, now)
+            return detection.center_x, detection.distance_m
+        x, z, velocity_x, velocity_z, previous_at = self.filter_state
+        dt = now - previous_at
+        if dt <= 0 or dt > 0.5:
+            self.filter_state = (detection.center_x, detection.distance_m, 0.0, 0.0, now)
+            return detection.center_x, detection.distance_m
+        predicted_x = x + velocity_x * dt
+        predicted_z = z + velocity_z * dt
+        residual_x = detection.center_x - predicted_x
+        residual_z = detection.distance_m - predicted_z
+        alpha, beta = 0.70, 0.12
+        x = predicted_x + alpha * residual_x
+        z = predicted_z + alpha * residual_z
+        velocity_x += beta * residual_x / dt
+        velocity_z += beta * residual_z / dt
+        self.filter_state = (x, z, velocity_x, velocity_z, now)
+        return x, z
+
+    @staticmethod
+    def from_points(tag_id: int, points: Any, tracked: bool = False) -> Detection | None:
+        import cv2
+        import numpy as np
+
+        edges = [math.dist(points[i], points[(i + 1) % 4]) for i in range(4)]
+        size_px = sum(edges) / 4
+        area = abs(float(cv2.contourArea(points.astype(np.float32))))
+        if size_px < 7 or area < 35 or not cv2.isContourConvex(points.astype(np.float32)):
+            return None
+        center = points.mean(axis=0)
+        camera_matrix = np.array([[FOCAL_PX, 0, FRAME_WIDTH / 2], [0, FOCAL_PX, FRAME_HEIGHT / 2], [0, 0, 1]], dtype=np.float64)
+        half = TAG_SIZE_M / 2
+        object_points = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]], dtype=np.float32)
+        solved, _, translation = cv2.solvePnP(
+            object_points, points.astype(np.float32), camera_matrix, np.zeros(5), flags=cv2.SOLVEPNP_IPPE_SQUARE
+        )
+        distance_m = float(np.linalg.norm(translation)) if solved and translation[2, 0] > 0 else TAG_SIZE_M * FOCAL_PX / size_px
+        return Detection(
+            tag_id=tag_id,
+            corners=[[float(x), float(y)] for x, y in points],
+            center_x=float(center[0]),
+            center_y=float(center[1]),
+            size_px=size_px,
+            distance_m=distance_m,
+            tracked=tracked,
+        )
 
     @staticmethod
     def detect_all(jpeg: bytes) -> list[Detection]:
@@ -117,34 +176,60 @@ class ArucoFollower:
             if tag_id not in ALLOWED_IDS:
                 continue
             points = raw_corners.reshape(4, 2)
-            edges = [math.dist(points[i], points[(i + 1) % 4]) for i in range(4)]
-            size_px = sum(edges) / 4
-            if size_px < 7:
-                continue
-            center = points.mean(axis=0)
-            camera_matrix = np.array([[FOCAL_PX, 0, FRAME_WIDTH / 2], [0, FOCAL_PX, FRAME_HEIGHT / 2], [0, 0, 1]], dtype=np.float64)
-            half = TAG_SIZE_M / 2
-            object_points = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]], dtype=np.float32)
-            solved, _, translation = cv2.solvePnP(
-                object_points, points.astype(np.float32), camera_matrix, np.zeros(5), flags=cv2.SOLVEPNP_IPPE_SQUARE
-            )
-            distance_m = float(np.linalg.norm(translation)) if solved and translation[2, 0] > 0 else TAG_SIZE_M * FOCAL_PX / size_px
-            candidates.append(
-                Detection(
-                    tag_id=tag_id,
-                    corners=[[float(x), float(y)] for x, y in points],
-                    center_x=float(center[0]),
-                    center_y=float(center[1]),
-                    size_px=size_px,
-                    distance_m=distance_m,
-                )
-            )
+            detection = ArucoFollower.from_points(tag_id, points)
+            if detection:
+                candidates.append(detection)
         return sorted(candidates, key=lambda item: item.size_px, reverse=True)
 
     @staticmethod
     def detect(jpeg: bytes) -> Detection | None:
         detections = ArucoFollower.detect_all(jpeg)
         return detections[0] if detections else None
+
+    def track_all(self, jpeg: bytes) -> list[Detection]:
+        """Fuse decoded ArUco measurements with short-horizon KLT tracks."""
+        import cv2
+        import numpy as np
+
+        gray = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+        if gray is None:
+            return []
+        now = time.monotonic()
+        measured = self.detect_all(jpeg)
+        by_id = {item.tag_id: item for item in measured}
+
+        if self.previous_gray is not None and self.tracks:
+            old_ids = list(self.tracks)
+            old_points = np.array(
+                [[point for point in self.tracks[tag_id][0].corners] for tag_id in old_ids], dtype=np.float32
+            ).reshape(-1, 1, 2)
+            new_points, forward_ok, _ = cv2.calcOpticalFlowPyrLK(
+                self.previous_gray, gray, old_points, None, winSize=(21, 21), maxLevel=3,
+                criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
+            )
+            if new_points is not None:
+                back_points, backward_ok, _ = cv2.calcOpticalFlowPyrLK(
+                    gray, self.previous_gray, new_points, None, winSize=(21, 21), maxLevel=3,
+                    criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
+                )
+                for index, tag_id in enumerate(old_ids):
+                    if tag_id in by_id or now - self.tracks[tag_id][1] > 0.35:
+                        continue
+                    sl = slice(index * 4, index * 4 + 4)
+                    valid = forward_ok[sl].all() and backward_ok is not None and backward_ok[sl].all()
+                    fb_error = float(np.max(np.linalg.norm(old_points[sl] - back_points[sl], axis=2))) if back_points is not None else 999
+                    if valid and fb_error <= 2.0:
+                        tracked = self.from_points(tag_id, new_points[sl].reshape(4, 2), tracked=True)
+                        if tracked:
+                            by_id[tag_id] = tracked
+
+        previous_seen = {tag_id: seen for tag_id, (_, seen) in self.tracks.items()}
+        self.tracks = {
+            tag_id: (item, now if not item.tracked else previous_seen[tag_id])
+            for tag_id, item in by_id.items()
+        }
+        self.previous_gray = gray
+        return sorted(by_id.values(), key=lambda item: item.size_px, reverse=True)
 
     async def run(self) -> None:
         while True:
@@ -158,7 +243,7 @@ class ArucoFollower:
                     await self.controller.stop("aruco-frame-stale", release=False)
                 continue
             self.last_sequence = sequence
-            detections = await asyncio.to_thread(self.detect_all, frame)
+            detections = await asyncio.to_thread(self.track_all, frame)
             if not detections:
                 # A tiny/distant marker may miss an individual compressed
                 # frame. Preserve the previous overlay/command briefly rather
@@ -171,20 +256,28 @@ class ArucoFollower:
                 else:
                     await self.controller.broadcast()
                 continue
-            detection = detections[0]
-            self.last_detection_at = time.monotonic()
+            available = {item.tag_id: item for item in detections}
+            detection = available.get(self.target_id) if self.target_id is not None else None
+            if detection is None:
+                detection = detections[0]
+                self.target_id = detection.tag_id
+                self.filter_state = None
+            if any(not item.tracked for item in detections):
+                self.last_detection_at = time.monotonic()
             state = self.controller.state
-            error_x = (detection.center_x - FRAME_WIDTH / 2) / (FRAME_WIDTH / 2)
+            filtered_x, filtered_distance = self.filter_target(detection, time.monotonic())
+            error_x = (filtered_x - FRAME_WIDTH / 2) / (FRAME_WIDTH / 2)
             state.aruco_visible = True
             state.aruco_id = detection.tag_id
-            state.aruco_distance_m = round(detection.distance_m, 3)
+            state.aruco_distance_m = round(filtered_distance, 3)
             state.aruco_error_x = round(error_x, 3)
             state.aruco_corners = detection.corners
             state.aruco_markers = [
-                {"id": item.tag_id, "distance_m": round(item.distance_m, 3), "corners": item.corners, "target": index == 0}
-                for index, item in enumerate(detections)
+                {"id": item.tag_id, "distance_m": round(item.distance_m, 3), "corners": item.corners,
+                 "target": item.tag_id == detection.tag_id, "tracked": item.tracked}
+                for item in detections
             ]
-            state.aruco_status = "target-reached" if detection.distance_m <= TARGET_DISTANCE_M else "tracking"
+            state.aruco_status = "target-reached" if filtered_distance <= TARGET_DISTANCE_M else "tracking"
             self.sync_state()
             if not self.follow:
                 await self.controller.broadcast()
@@ -193,7 +286,7 @@ class ArucoFollower:
                 await self.disable_follow("aruco-control-lost")
                 continue
             turn = max(-0.55, min(0.55, -1.15 * error_x))
-            distance_error = detection.distance_m - TARGET_DISTANCE_M
+            distance_error = filtered_distance - TARGET_DISTANCE_M
             forward = max(0.0, min(0.48, distance_error * 0.9))
             if abs(error_x) > 0.32:
                 forward = 0.0

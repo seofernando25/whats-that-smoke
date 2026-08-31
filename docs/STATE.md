@@ -21,7 +21,7 @@ wifi.profile = FillMeUpLink; autoconnect=yes; gateway=192.168.8.1
 uv = /usr/local/bin/uv@0.12.7 ✓
 camera.sensor = ov5647@0x36 ✓
 camera.capture = 2592x1944/JPEG ✓
-camera.mount_rotation = 180deg
+camera.mount_rotation = hflip+vflip = 180deg
 pcb.label = V3.0
 ```
 

@@ -4,7 +4,7 @@
 
 ```text
 Pi4B
-├─ CSI -> OV5647 camera ✓ [physical image inverted; transform=rot180]
+├─ CSI -> OV5647 camera ✓ [physical image inverted; transform=hflip+vflip]
 ├─ 40-pin GPIO -> Freenove connector PCB V3.0 ✓
 │  ├─ motor driver ? -> 4×DC motor
 │  ├─ PWM/servo controller ? -> pan/tilt
@@ -25,6 +25,8 @@ PCB here=v3.0 => do-not-transfer v1/v2 SPI rule without evidence
 ```
 
 ## camera
+
+`stream := 640x480@30; exposure=sport; AWB=indoor; denoise=off; hflip+vflip`
 
 ```text
 detect := rpicam-hello --list-cameras

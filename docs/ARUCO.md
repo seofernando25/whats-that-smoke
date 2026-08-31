@@ -10,9 +10,13 @@ mount := distribute/angle tags under plane; exact edge-on(90deg)=>undetectable b
 ## detect
 
 ```text
-runtime := Pi/OpenCV-contrib; source:=shared 640x480 MJPEG latest frame
-rate := <=20Hz; overlay:=all; follow-target:=largest/closest apparent marker
+runtime := Pi4/OpenCV-contrib; source:=shared 640x480 MJPEG latest frame
+capture := 30fps; exposure=sport; denoise=off; objective=short motion blur
+rate := <=30Hz; overlay:=all; follow-target:=ID-lock then largest/closest
 corners := subpixel refinement; standard detector (low-latency)
+continuity := pyramidal-LK corners; forward↔back error<=2px; TTL=350ms; TRACK=dashed
+association := decoded ID; no appearance model/Hungarian required for unique fiducials
+state := target-ID alpha-beta constant-velocity[x,z]; α=.70 β=.12; reset(ID-change|dt>.5s)
 pose := SOLVEPNP_IPPE_SQUARE; tag=0.050m
 Kapprox := fx=fy=628px; cx=320; cy=240; distortion=0
 distance precision => calibrate camera intrinsics later; control uses conservative deadband

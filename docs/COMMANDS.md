@@ -16,7 +16,7 @@ led.each.rgb.gpio18 := sudo .venv/bin/wts led-test-gpio18
 ## semantics
 
 ```text
-snapshot: OV5647; wait=500ms; rotation=180; mkdir(parent); print(abs-path)
+snapshot: OV5647; wait=500ms; hflip+vflip=180deg; mkdir(parent); print(abs-path)
 servo-test(axis): require i2c-1 + PCA9685@0x40
   axis=pan  -> PCA channel 8 only
   axis=tilt -> PCA channel 9 only

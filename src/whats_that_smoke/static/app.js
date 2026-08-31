@@ -29,11 +29,13 @@ function drawAruco(next) {
     if (marker.corners.length !== 4) return;
     const points = marker.corners.map(([x, y]) => [x0 + x * scale, y0 + y * scale]);
     const color = marker.target ? "#e11d48" : "#2563eb";
+    arucoContext.setLineDash(marker.tracked ? [6, 4] : []);
     arucoContext.beginPath(); arucoContext.moveTo(...points[0]); points.slice(1).forEach(point => arucoContext.lineTo(...point)); arucoContext.closePath();
     arucoContext.lineWidth = marker.target ? 3 : 2; arucoContext.strokeStyle = color; arucoContext.stroke();
     arucoContext.fillStyle = color; arucoContext.font = "700 13px system-ui";
-    arucoContext.fillText(`ARUCO ${marker.id} · ${marker.distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
+    arucoContext.fillText(`ARUCO ${marker.id}${marker.tracked ? " · TRACK" : ""} · ${marker.distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
   });
+  arucoContext.setLineDash([]);
 }
 
 function vector() {

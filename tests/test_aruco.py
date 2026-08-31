@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import cv2
 import numpy as np
+from unittest.mock import patch
 
 from whats_that_smoke.aruco import ArucoFollower
 
@@ -52,3 +53,17 @@ def test_detects_multiple_ids_in_one_frame() -> None:
     results = ArucoFollower.detect_all(jpeg.tobytes())
     assert {result.tag_id for result in results} == {3, 17}
     assert results[0].tag_id == 17
+
+
+def test_optical_flow_bridges_a_decoder_miss() -> None:
+    first_jpeg = encoded_scene(np.array([[220, 120], [420, 120], [420, 320], [220, 320]]))
+    second_jpeg = encoded_scene(np.array([[230, 125], [430, 125], [430, 325], [230, 325]]))
+    seed = ArucoFollower.detect(first_jpeg)
+    assert seed is not None
+    follower = ArucoFollower(None, None)  # type: ignore[arg-type]
+    with patch.object(follower, "detect_all", side_effect=[[seed], []]):
+        follower.track_all(first_jpeg)
+        tracked = follower.track_all(second_jpeg)
+    assert len(tracked) == 1
+    assert tracked[0].tracked
+    assert abs(tracked[0].center_x - 330) < 2
