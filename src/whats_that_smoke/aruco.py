@@ -26,6 +26,22 @@ class Detection:
     size_px: float
     distance_m: float
     tracked: bool = False
+    source: str = "decode"
+    age_s: float = 0.0
+    confidence: float = 1.0
+
+
+@dataclass
+class TrackMemory:
+    detection: Detection
+    decoded_at: float
+    visual_at: float
+    updated_at: float
+    velocity_x: float = 0.0
+    velocity_y: float = 0.0
+    velocity_size: float = 0.0
+    tracker: Any | None = None
+    bbox: tuple[float, float, float, float] | None = None
 
 
 class ArucoFollower:
@@ -39,7 +55,7 @@ class ArucoFollower:
         self.last_sequence = -1
         self.last_detection_at = 0.0
         self.previous_gray: Any | None = None
-        self.tracks: dict[int, tuple[Detection, float]] = {}
+        self.tracks: dict[int, TrackMemory] = {}
         self.target_id: int | None = None
         self.filter_state: tuple[float, float, float, float, float] | None = None
 
@@ -121,7 +137,9 @@ class ArucoFollower:
         return x, z
 
     @staticmethod
-    def from_points(tag_id: int, points: Any, tracked: bool = False) -> Detection | None:
+    def from_points(
+        tag_id: int, points: Any, tracked: bool = False, source: str = "decode", age_s: float = 0.0, confidence: float = 1.0
+    ) -> Detection | None:
         import cv2
         import numpy as np
 
@@ -146,6 +164,9 @@ class ArucoFollower:
             size_px=size_px,
             distance_m=distance_m,
             tracked=tracked,
+            source=source,
+            age_s=age_s,
+            confidence=confidence,
         )
 
     @staticmethod
@@ -186,54 +207,165 @@ class ArucoFollower:
         detections = ArucoFollower.detect_all(jpeg)
         return detections[0] if detections else None
 
+    @staticmethod
+    def expanded_bbox(detection: Detection, width: int, height: int) -> tuple[float, float, float, float]:
+        xs = [point[0] for point in detection.corners]
+        ys = [point[1] for point in detection.corners]
+        box_width = max(24.0, (max(xs) - min(xs)) * 1.8)
+        box_height = max(24.0, (max(ys) - min(ys)) * 1.8)
+        center_x, center_y = detection.center_x, detection.center_y
+        left = max(0.0, min(width - box_width, center_x - box_width / 2))
+        top = max(0.0, min(height - box_height, center_y - box_height / 2))
+        return left, top, min(box_width, width - left), min(box_height, height - top)
+
+    @staticmethod
+    def create_tracker(image: Any, bbox: tuple[float, float, float, float]) -> Any | None:
+        import cv2
+
+        try:
+            tracker = cv2.legacy.TrackerMOSSE_create()
+            tracker.init(image, bbox)
+            return tracker
+        except (AttributeError, cv2.error):
+            return None
+
+    def update_motion(self, memory: TrackMemory, detection: Detection, now: float) -> None:
+        dt = now - memory.updated_at
+        if dt > 0.005 and detection.source != "predict":
+            observed_x = (detection.center_x - memory.detection.center_x) / dt
+            observed_y = (detection.center_y - memory.detection.center_y) / dt
+            observed_size = (detection.size_px - memory.detection.size_px) / dt
+            blend = 0.45
+            memory.velocity_x = max(-1800.0, min(1800.0, (1 - blend) * memory.velocity_x + blend * observed_x))
+            memory.velocity_y = max(-1800.0, min(1800.0, (1 - blend) * memory.velocity_y + blend * observed_y))
+            memory.velocity_size = max(-900.0, min(900.0, (1 - blend) * memory.velocity_size + blend * observed_size))
+        memory.detection = detection
+        memory.updated_at = now
+        if detection.source != "predict":
+            memory.visual_at = now
+
+    def transform_from_bbox(
+        self, memory: TrackMemory, bbox: tuple[float, float, float, float], source: str, now: float
+    ) -> Detection | None:
+        import numpy as np
+
+        if memory.bbox is None:
+            return None
+        old_x, old_y, old_w, old_h = memory.bbox
+        new_x, new_y, new_w, new_h = bbox
+        if min(new_w, new_h) < 12 or not 0.45 <= new_w / old_w <= 2.2 or not 0.45 <= new_h / old_h <= 2.2:
+            return None
+        old_center = np.array([old_x + old_w / 2, old_y + old_h / 2], dtype=np.float32)
+        new_center = np.array([new_x + new_w / 2, new_y + new_h / 2], dtype=np.float32)
+        points = np.array(memory.detection.corners, dtype=np.float32)
+        points = (points - old_center) * np.array([new_w / old_w, new_h / old_h], dtype=np.float32) + new_center
+        age = now - memory.decoded_at
+        confidence = max(0.20, 0.72 * math.exp(-age / 1.2))
+        return self.from_points(memory.detection.tag_id, points, True, source, age, confidence)
+
     def track_all(self, jpeg: bytes) -> list[Detection]:
-        """Fuse decoded ArUco measurements with short-horizon KLT tracks."""
+        """Fuse ArUco, KLT, MOSSE correlation, and motion prediction."""
         import cv2
         import numpy as np
 
-        gray = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
-        if gray is None:
+        image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
             return []
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         now = time.monotonic()
         measured = self.detect_all(jpeg)
         by_id = {item.tag_id: item for item in measured}
 
+        flow_candidates: dict[int, Detection] = {}
+
         if self.previous_gray is not None and self.tracks:
             old_ids = list(self.tracks)
             old_points = np.array(
-                [[point for point in self.tracks[tag_id][0].corners] for tag_id in old_ids], dtype=np.float32
+                [[point for point in self.tracks[tag_id].detection.corners] for tag_id in old_ids], dtype=np.float32
             ).reshape(-1, 1, 2)
+            initial_points = old_points.copy()
+            for index, tag_id in enumerate(old_ids):
+                memory = self.tracks[tag_id]
+                dt = now - memory.updated_at
+                initial_points[index * 4:(index + 1) * 4, 0, 0] += memory.velocity_x * dt
+                initial_points[index * 4:(index + 1) * 4, 0, 1] += memory.velocity_y * dt
             new_points, forward_ok, _ = cv2.calcOpticalFlowPyrLK(
-                self.previous_gray, gray, old_points, None, winSize=(21, 21), maxLevel=3,
+                self.previous_gray, gray, old_points, initial_points, winSize=(35, 35), maxLevel=4,
                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
+                flags=cv2.OPTFLOW_USE_INITIAL_FLOW,
             )
             if new_points is not None:
                 back_points, backward_ok, _ = cv2.calcOpticalFlowPyrLK(
-                    gray, self.previous_gray, new_points, None, winSize=(21, 21), maxLevel=3,
+                    gray, self.previous_gray, new_points, None, winSize=(35, 35), maxLevel=4,
                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03),
                 )
                 for index, tag_id in enumerate(old_ids):
-                    if tag_id in by_id or now - self.tracks[tag_id][1] > 0.35:
+                    memory = self.tracks[tag_id]
+                    if tag_id in by_id or now - memory.visual_at > 0.8:
                         continue
                     sl = slice(index * 4, index * 4 + 4)
                     valid = forward_ok[sl].all() and backward_ok is not None and backward_ok[sl].all()
                     fb_error = float(np.max(np.linalg.norm(old_points[sl] - back_points[sl], axis=2))) if back_points is not None else 999
-                    if valid and fb_error <= 2.0:
-                        tracked = self.from_points(tag_id, new_points[sl].reshape(4, 2), tracked=True)
+                    if valid and fb_error <= 4.0:
+                        age = now - memory.decoded_at
+                        tracked = self.from_points(
+                            tag_id, new_points[sl].reshape(4, 2), True, "flow", age,
+                            max(0.25, 0.88 * math.exp(-age / 1.0)),
+                        )
                         if tracked:
-                            by_id[tag_id] = tracked
+                            flow_candidates[tag_id] = tracked
 
-        previous_seen = {tag_id: seen for tag_id, (_, seen) in self.tracks.items()}
-        self.tracks = {
-            tag_id: (item, now if not item.tracked else previous_seen[tag_id])
-            for tag_id, item in by_id.items()
-        }
+        next_tracks: dict[int, TrackMemory] = {}
+        for tag_id, detection in by_id.items():
+            memory = self.tracks.get(tag_id)
+            bbox = self.expanded_bbox(detection, image.shape[1], image.shape[0])
+            if memory is None:
+                memory = TrackMemory(detection, now, now, now)
+            else:
+                self.update_motion(memory, detection, now)
+                memory.decoded_at = now
+            memory.tracker = self.create_tracker(image, bbox)
+            memory.bbox = bbox
+            next_tracks[tag_id] = memory
+
+        for tag_id, memory in self.tracks.items():
+            if tag_id in next_tracks:
+                continue
+            correlation: Detection | None = None
+            correlation_bbox: tuple[float, float, float, float] | None = None
+            if memory.tracker is not None and now - memory.visual_at <= 1.0:
+                ok, raw_bbox = memory.tracker.update(image)
+                if ok:
+                    correlation_bbox = tuple(float(value) for value in raw_bbox)
+                    correlation = self.transform_from_bbox(memory, correlation_bbox, "correlation", now)
+            selected = flow_candidates.get(tag_id) or correlation
+            if selected is None and now - memory.visual_at <= 1.2:
+                dt = now - memory.updated_at
+                old_points = np.array(memory.detection.corners, dtype=np.float32)
+                center = np.array([memory.detection.center_x, memory.detection.center_y], dtype=np.float32)
+                predicted_size = max(7.0, memory.detection.size_px + memory.velocity_size * dt)
+                scale = predicted_size / memory.detection.size_px
+                shift = np.array([memory.velocity_x * dt, memory.velocity_y * dt], dtype=np.float32)
+                points = (old_points - center) * scale + center + shift
+                age = now - memory.decoded_at
+                selected = self.from_points(
+                    tag_id, points, True, "predict", age, max(0.08, 0.42 * math.exp(-(now - memory.visual_at) / 0.45))
+                )
+            if selected is None:
+                continue
+            self.update_motion(memory, selected, now)
+            if correlation_bbox is not None:
+                memory.bbox = correlation_bbox
+            next_tracks[tag_id] = memory
+            by_id[tag_id] = selected
+
+        self.tracks = next_tracks
         self.previous_gray = gray
         return sorted(by_id.values(), key=lambda item: item.size_px, reverse=True)
 
     async def run(self) -> None:
         while True:
-            await asyncio.sleep(0.045)
+            await asyncio.sleep(0.030)
             if not self.enabled:
                 continue
             frame, sequence = self.camera.latest()
@@ -274,16 +406,23 @@ class ArucoFollower:
             state.aruco_corners = detection.corners
             state.aruco_markers = [
                 {"id": item.tag_id, "distance_m": round(item.distance_m, 3), "corners": item.corners,
-                 "target": item.tag_id == detection.tag_id, "tracked": item.tracked}
+                 "target": item.tag_id == detection.tag_id, "tracked": item.tracked,
+                 "source": item.source, "age_ms": round(item.age_s * 1000), "confidence": round(item.confidence, 2)}
                 for item in detections
             ]
-            state.aruco_status = "target-reached" if filtered_distance <= TARGET_DISTANCE_M else "tracking"
+            state.aruco_status = (
+                "target-reached" if filtered_distance <= TARGET_DISTANCE_M else
+                "tracking" if detection.source == "decode" else f"tracking-{detection.source}"
+            )
             self.sync_state()
             if not self.follow:
                 await self.controller.broadcast()
                 continue
             if self.controller.state.owner != self.owner or not self.controller.state.armed:
                 await self.disable_follow("aruco-control-lost")
+                continue
+            if detection.age_s > 0.35:
+                await self.controller.stop("aruco-decode-stale", release=False)
                 continue
             turn = max(-0.55, min(0.55, -1.15 * error_x))
             distance_error = filtered_distance - TARGET_DISTANCE_M

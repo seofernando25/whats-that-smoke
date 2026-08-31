@@ -33,7 +33,8 @@ function drawAruco(next) {
     arucoContext.beginPath(); arucoContext.moveTo(...points[0]); points.slice(1).forEach(point => arucoContext.lineTo(...point)); arucoContext.closePath();
     arucoContext.lineWidth = marker.target ? 3 : 2; arucoContext.strokeStyle = color; arucoContext.stroke();
     arucoContext.fillStyle = color; arucoContext.font = "700 13px system-ui";
-    arucoContext.fillText(`ARUCO ${marker.id}${marker.tracked ? " · TRACK" : ""} · ${marker.distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
+    const source = marker.source && marker.source !== "decode" ? ` · ${marker.source.toUpperCase()} ${Math.round((marker.confidence || 0) * 100)}%` : "";
+    arucoContext.fillText(`ARUCO ${marker.id}${source} · ${marker.distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
   });
   arucoContext.setLineDash([]);
 }
