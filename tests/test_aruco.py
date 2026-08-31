@@ -33,3 +33,10 @@ def test_detects_oblique_tag() -> None:
     assert result is not None
     assert result.tag_id == 3
     assert result.distance_m > 0
+
+
+def test_detects_small_distant_tag() -> None:
+    # Six payload/border cells across: ~2 px/cell is near the useful 640p floor.
+    result = ArucoFollower.detect(encoded_scene(np.array([[300, 200], [312, 200], [312, 212], [300, 212]])))
+    assert result is not None
+    assert result.tag_id == 3

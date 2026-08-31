@@ -51,7 +51,7 @@ class CameraStream:
     def _run(self):
         cmd = ["rpicam-vid", "--timeout", "0", "--nopreview", "--codec", "mjpeg",
                "--width", "640", "--height", "480", "--framerate", "20",
-               "--quality", "60", "--rotation", "180", "--flush", "--output", "-"]
+               "--quality", "75", "--rotation", "180", "--flush", "--output", "-"]
         while not self.stop.is_set():
             try:
                 self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
