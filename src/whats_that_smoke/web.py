@@ -32,6 +32,7 @@ class RobotState:
     aruco_distance_m: float | None = None
     aruco_error_x: float | None = None
     aruco_corners: list[list[float]] = field(default_factory=list)
+    aruco_markers: list[dict] = field(default_factory=list)
     aruco_status: str = "aruco-disabled"
     wheels: dict[str, int] = field(default_factory=lambda: {n: 0 for n in WHEEL_CHANNELS})
     stopped: bool = True

@@ -40,3 +40,15 @@ def test_detects_small_distant_tag() -> None:
     result = ArucoFollower.detect(encoded_scene(np.array([[300, 200], [312, 200], [312, 212], [300, 212]])))
     assert result is not None
     assert result.tag_id == 3
+
+
+def test_detects_multiple_ids_in_one_frame() -> None:
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    canvas = np.full((480, 640), 255, dtype=np.uint8)
+    canvas[80:180, 80:180] = cv2.aruco.generateImageMarker(dictionary, 3, 100)
+    canvas[240:380, 400:540] = cv2.aruco.generateImageMarker(dictionary, 17, 140)
+    ok, jpeg = cv2.imencode(".jpg", canvas)
+    assert ok
+    results = ArucoFollower.detect_all(jpeg.tobytes())
+    assert {result.tag_id for result in results} == {3, 17}
+    assert results[0].tag_id == 17

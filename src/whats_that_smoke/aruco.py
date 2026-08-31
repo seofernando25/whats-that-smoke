@@ -14,7 +14,7 @@ FRAME_HEIGHT = 480
 TAG_SIZE_M = 0.050
 TARGET_DISTANCE_M = 0.30
 FOCAL_PX = 628.0  # OV5647 nominal 54 deg horizontal FOV at 640 px; calibrate for precision.
-ALLOWED_IDS = frozenset(range(5))
+ALLOWED_IDS = frozenset(range(50))
 
 
 @dataclass
@@ -86,16 +86,17 @@ class ArucoFollower:
         state.aruco_distance_m = None
         state.aruco_error_x = None
         state.aruco_corners = []
+        state.aruco_markers = []
         state.aruco_status = status
 
     @staticmethod
-    def detect(jpeg: bytes) -> Detection | None:
+    def detect_all(jpeg: bytes) -> list[Detection]:
         import cv2
         import numpy as np
 
         image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         if image is None:
-            return None
+            return []
         dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         parameters = cv2.aruco.DetectorParameters()
         parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
@@ -109,7 +110,7 @@ class ArucoFollower:
         detector = cv2.aruco.ArucoDetector(dictionary, parameters)
         corners, ids, _ = detector.detectMarkers(image)
         if ids is None:
-            return None
+            return []
         candidates: list[Detection] = []
         for raw_corners, raw_id in zip(corners, ids.flatten(), strict=True):
             tag_id = int(raw_id)
@@ -138,7 +139,12 @@ class ArucoFollower:
                     distance_m=distance_m,
                 )
             )
-        return max(candidates, key=lambda item: item.size_px, default=None)
+        return sorted(candidates, key=lambda item: item.size_px, reverse=True)
+
+    @staticmethod
+    def detect(jpeg: bytes) -> Detection | None:
+        detections = ArucoFollower.detect_all(jpeg)
+        return detections[0] if detections else None
 
     async def run(self) -> None:
         while True:
@@ -152,8 +158,8 @@ class ArucoFollower:
                     await self.controller.stop("aruco-frame-stale", release=False)
                 continue
             self.last_sequence = sequence
-            detection = await asyncio.to_thread(self.detect, frame)
-            if detection is None:
+            detections = await asyncio.to_thread(self.detect_all, frame)
+            if not detections:
                 # A tiny/distant marker may miss an individual compressed
                 # frame. Preserve the previous overlay/command briefly rather
                 # than visually flickering or braking at every isolated miss.
@@ -165,6 +171,7 @@ class ArucoFollower:
                 else:
                     await self.controller.broadcast()
                 continue
+            detection = detections[0]
             self.last_detection_at = time.monotonic()
             state = self.controller.state
             error_x = (detection.center_x - FRAME_WIDTH / 2) / (FRAME_WIDTH / 2)
@@ -173,6 +180,10 @@ class ArucoFollower:
             state.aruco_distance_m = round(detection.distance_m, 3)
             state.aruco_error_x = round(error_x, 3)
             state.aruco_corners = detection.corners
+            state.aruco_markers = [
+                {"id": item.tag_id, "distance_m": round(item.distance_m, 3), "corners": item.corners, "target": index == 0}
+                for index, item in enumerate(detections)
+            ]
             state.aruco_status = "target-reached" if detection.distance_m <= TARGET_DISTANCE_M else "tracking"
             self.sync_state()
             if not self.follow:
@@ -201,5 +212,6 @@ def state_defaults() -> dict[str, Any]:
         "aruco_distance_m": None,
         "aruco_error_x": None,
         "aruco_corners": [],
+        "aruco_markers": [],
         "aruco_status": "aruco-disabled",
     }

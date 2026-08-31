@@ -1,7 +1,7 @@
 # ARUCO
 
 ```text
-dict := DICT_4X4_50; accepted IDs={0..4}
+dict := DICT_4X4_50; accepted IDs={0..49}; detect=simultaneous
 print := docs/aruco-tags-50mm.pdf; Actual Size/100%; black boundary=50mm
 quiet-zone := >=5mm white; do-not laminate glossy
 mount := distribute/angle tags under plane; exact edge-on(90deg)=>undetectable by geometry
@@ -11,8 +11,8 @@ mount := distribute/angle tags under plane; exact edge-on(90deg)=>undetectable b
 
 ```text
 runtime := Pi/OpenCV-contrib; source:=shared 640x480 MJPEG latest frame
-rate := <=10Hz; select:=largest valid ID
-corners := subpixel refinement; ArUco3 detector where supported
+rate := <=20Hz; overlay:=all; follow-target:=largest/closest apparent marker
+corners := subpixel refinement; standard detector (low-latency)
 pose := SOLVEPNP_IPPE_SQUARE; tag=0.050m
 Kapprox := fx=fy=628px; cx=320; cy=240; distortion=0
 distance precision => calibrate camera intrinsics later; control uses conservative deadband
@@ -36,5 +36,5 @@ speed_limit := 1300; reverse∅
 tag∅|frame stale>450ms|disconnect|disarm|disable|shutdown => brake
 watchdog=600ms independent hardware thread; loop stall=>brake+disarm
 manual drive while FOLLOW ON => rejected
-blind search∅; autonomous reverse∅; accepted IDs outside 0..4 ignored
+blind search∅; autonomous reverse∅; IDs outside DICT_4X4_50 ignored
 ```

@@ -20,15 +20,20 @@ function drawAruco(next) {
   }
   arucoContext.setTransform(ratio, 0, 0, ratio, 0, 0);
   arucoContext.clearRect(0, 0, width, height);
-  if (!next.aruco_visible || next.aruco_corners.length !== 4) return;
+  if (!next.aruco_visible) return;
   const image = $("#camera-feed"), naturalWidth = image.naturalWidth || 640, naturalHeight = image.naturalHeight || 480;
   const scale = Math.min(width / naturalWidth, height / naturalHeight);
   const x0 = (width - naturalWidth * scale) / 2, y0 = (height - naturalHeight * scale) / 2;
-  const points = next.aruco_corners.map(([x, y]) => [x0 + x * scale, y0 + y * scale]);
-  arucoContext.beginPath(); arucoContext.moveTo(...points[0]); points.slice(1).forEach(point => arucoContext.lineTo(...point)); arucoContext.closePath();
-  arucoContext.lineWidth = 3; arucoContext.strokeStyle = "#e11d48"; arucoContext.stroke();
-  arucoContext.fillStyle = "#e11d48"; arucoContext.font = "700 13px system-ui";
-  arucoContext.fillText(`ARUCO ${next.aruco_id} · ${next.aruco_distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
+  const markers = next.aruco_markers?.length ? next.aruco_markers : [{ id: next.aruco_id, distance_m: next.aruco_distance_m, corners: next.aruco_corners, target: true }];
+  markers.forEach(marker => {
+    if (marker.corners.length !== 4) return;
+    const points = marker.corners.map(([x, y]) => [x0 + x * scale, y0 + y * scale]);
+    const color = marker.target ? "#e11d48" : "#2563eb";
+    arucoContext.beginPath(); arucoContext.moveTo(...points[0]); points.slice(1).forEach(point => arucoContext.lineTo(...point)); arucoContext.closePath();
+    arucoContext.lineWidth = marker.target ? 3 : 2; arucoContext.strokeStyle = color; arucoContext.stroke();
+    arucoContext.fillStyle = color; arucoContext.font = "700 13px system-ui";
+    arucoContext.fillText(`ARUCO ${marker.id} · ${marker.distance_m.toFixed(2)} m`, points[0][0], points[0][1] - 8);
+  });
 }
 
 function vector() {
@@ -72,7 +77,7 @@ function render(next) {
   $("#aruco-toggle").setAttribute("aria-pressed", String(next.aruco_enabled));
   $("#follow-toggle").textContent = next.aruco_follow ? "FOLLOW ON" : "FOLLOW OFF";
   $("#follow-toggle").setAttribute("aria-pressed", String(next.aruco_follow));
-  $("#aruco-readout").textContent = next.aruco_visible ? `ID ${next.aruco_id} · ${next.aruco_distance_m.toFixed(2)} m` : next.aruco_status;
+  $("#aruco-readout").textContent = next.aruco_visible ? `${next.aruco_markers?.length || 1} tag(s) · target ${next.aruco_id} · ${next.aruco_distance_m.toFixed(2)} m` : next.aruco_status;
   drawAruco(next);
   Object.entries(next.wheels).forEach(([name, duty]) => document.querySelector(`[data-wheel="${name}"]`).textContent = duty);
 }
