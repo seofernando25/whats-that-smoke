@@ -12,6 +12,7 @@
       <div class="media-layer" id="media-layer">
         <img id="camera-feed" src="/stream.mjpg" alt="Live robot camera" />
         <canvas id="vision-overlay"></canvas>
+        <canvas id="aruco-overlay"></canvas>
       </div>
 
       <div class="feed-label"><span>LIVE · 640×480 · 20 FPS</span><span class="connection" id="connection"><i></i> Connecting</span></div>
@@ -23,6 +24,7 @@
         <div><dt>Clients</dt><dd id="clients">0</dd></div>
         <div><dt>Vector</dt><dd><span id="forward">0.00</span> / <span id="turn">0.00</span></dd></div>
         <div><dt>Camera</dt><dd><span id="pan">1500 µs</span> / <span id="tilt">1500 µs</span></dd></div>
+        <div><dt>ArUco</dt><dd id="aruco-readout">OFF</dd></div>
       </dl>
 
       <div class="key-overlay" aria-label="Keyboard input status">
@@ -34,6 +36,8 @@
         <button id="arm">ARM</button>
         <button id="detect-toggle" aria-pressed="false">DETECT OFF</button>
         <button id="stabilize-toggle" aria-pressed="false">STABILIZE OFF</button>
+        <button id="aruco-toggle" aria-pressed="false">ARUCO OFF</button>
+        <button id="follow-toggle" aria-pressed="false">FOLLOW OFF</button>
         <label for="speed">Speed <output id="speed-value">1800</output></label>
         <input id="speed" type="range" min="500" max="1800" step="50" value="1800" />
         <span class="meter" aria-hidden="true"><i id="speed-meter"></i></span>

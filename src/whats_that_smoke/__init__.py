@@ -78,6 +78,24 @@ def _stop_wheels(bus: object) -> None:
         _set_pwm(bus, channel, 4095)
 
 
+def emergency_stop() -> int:
+    """Brake every motor channel from a short-lived independent process."""
+    if not Path("/dev/i2c-1").exists():
+        raise SystemExit("refused: /dev/i2c-1 absent")
+
+    from smbus2 import SMBus
+
+    with SMBus(1) as bus:
+        try:
+            bus.read_byte_data(0x40, 0x00)
+        except OSError as exc:
+            raise SystemExit("refused: PCA9685@0x40 not detected") from exc
+        _configure_pca9685(bus)
+        _stop_wheels(bus)
+    print("ok emergency-stop all_wheels=braked")
+    return 0
+
+
 def servo_test(axis: str, delta_us: int, dwell: float) -> int:
     bus_path = Path("/dev/i2c-1")
     if not bus_path.exists():
@@ -231,6 +249,7 @@ def parser() -> argparse.ArgumentParser:
     led18 = commands.add_parser("led-test-gpio18", help="test RGB pixels via legacy GPIO18")
     led18.add_argument("--brightness", type=int, default=32, metavar="1..96")
     led18.add_argument("--dwell", type=float, default=0.25)
+    commands.add_parser("emergency-stop", help="immediately brake all wheel channels")
     return root
 
 
@@ -238,6 +257,8 @@ def main() -> int:
     args = parser().parse_args()
     if args.command == "snapshot":
         return snapshot(args.output)
+    if args.command == "emergency-stop":
+        return emergency_stop()
     if args.command == "wheel-test":
         if not 500 <= args.duty <= 1500:
             raise SystemExit("--duty must be within 500..1500")

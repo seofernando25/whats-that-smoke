@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from smbus2 import SMBus
 from . import SERVO_CHANNELS, WHEEL_CHANNELS, _configure_pca9685, _set_pulse, _set_pwm, _stop_wheels
+from .aruco import ArucoFollower
 
 STATIC = Path(__file__).parent / "static"
 WATCHDOG_SECONDS = .60
@@ -24,6 +25,14 @@ class RobotState:
     speed_limit: int = 1800
     pan_us: int = 1500
     tilt_us: int = 1500
+    aruco_enabled: bool = False
+    aruco_follow: bool = False
+    aruco_visible: bool = False
+    aruco_id: int | None = None
+    aruco_distance_m: float | None = None
+    aruco_error_x: float | None = None
+    aruco_corners: list[list[float]] = field(default_factory=list)
+    aruco_status: str = "aruco-disabled"
     wheels: dict[str, int] = field(default_factory=lambda: {n: 0 for n in WHEEL_CHANNELS})
     stopped: bool = True
     reason: str = "startup"
@@ -74,6 +83,10 @@ class CameraStream:
                 frame, seen = self.frame, self.seq
             if frame:
                 yield b"--frame\r\nContent-Type: image/jpeg\r\nCache-Control: no-store\r\n\r\n" + frame + b"\r\n"
+
+    def latest(self) -> tuple[bytes | None, int]:
+        with self.cv:
+            return self.frame, self.seq
 
     def close(self):
         self.stop.set()
@@ -138,9 +151,10 @@ class RobotController:
                 elif duty < 0: _set_pwm(self.bus, fwd, 0); _set_pwm(self.bus, rev, abs(duty))
                 else: _set_pwm(self.bus, rev, 4095); _set_pwm(self.bus, fwd, 4095)
 
-    async def drive(self, cid, forward, turn, limit):
+    async def drive(self, cid, forward, turn, limit, autonomous=False):
         async with self.lock:
             if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
+            if aruco.follow and not autonomous: raise PermissionError("disable ArUco follow before manual drive")
             if not math.isfinite(forward) or not math.isfinite(turn): raise ValueError
             forward = max(-1., min(1., forward)); turn = max(-1., min(1., turn)); limit = max(500, min(1800, limit))
             motor_forward = -forward
@@ -176,14 +190,14 @@ class RobotController:
             except Exception: dead.append(cid)
         for cid in dead: self.clients.pop(cid, None)
 
-controller = RobotController(); camera = CameraStream()
+controller = RobotController(); camera = CameraStream(); aruco = ArucoFollower(camera, controller)
 app = FastAPI(title="What's That Smoke Control", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 @app.on_event("startup")
-async def startup(): await controller.start(); camera.start()
+async def startup(): await controller.start(); camera.start(); aruco.start()
 @app.on_event("shutdown")
-async def shutdown(): camera.close(); await controller.close()
+async def shutdown(): await aruco.close(); camera.close(); await controller.close()
 @app.get("/")
 async def index(): return FileResponse(STATIC / "index.html")
 @app.get("/stream.mjpg")
@@ -203,12 +217,15 @@ async def websocket_endpoint(ws: WebSocket):
                 if kind == "drive": await controller.drive(cid, float(m.get("forward",0)), float(m.get("turn",0)), int(m.get("speed_limit",1800)))
                 elif kind == "arm": await controller.arm(cid)
                 elif kind == "camera": await controller.camera_move(cid, str(m.get("axis")), int(m.get("delta", 0)))
+                elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"))
                 elif kind == "heartbeat": await ws.send_json(controller.payload(cid))
                 elif kind == "stop" and controller.state.owner in (None,cid): await controller.stop("client-stop", True)
                 else: await ws.send_json({"type":"error","error":"unknown message"})
             except PermissionError as e: await ws.send_json({"type":"error","error":str(e)})
             except (TypeError, ValueError, json.JSONDecodeError): await ws.send_json({"type":"error","error":"invalid message"})
     except WebSocketDisconnect: pass
-    finally: await controller.disconnect(cid)
+    finally:
+        if aruco.owner == cid: await aruco.disable_follow("aruco-owner-disconnected")
+        await controller.disconnect(cid)
 
 def main(): uvicorn.run("whats_that_smoke.web:app", host="0.0.0.0", port=8765, reload=False)

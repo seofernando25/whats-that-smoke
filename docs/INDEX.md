@@ -29,3 +29,5 @@ L3 PROTOCOL.md
 `mutation := declare intent -> safety gate -> smallest effect -> verify -> STATE∆`
 
 `never-store := passwords|tokens|private-keys|router-secrets`
+
+`ARUCO.md := 50mm IDs0..4 + pose/follow equations + autonomous failsafes`

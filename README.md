@@ -35,6 +35,7 @@ dash := uv run wts-dashboard # http://192.168.8.170:8765
 deploy := Pi-local hardware service; source mirror=GitHub
 cloud-runtime := ∅ by design; GPIO/I2C/camera live on Pi
 browser-vision := local model/runtime assets; inference runs on dashboard client
+aruco := robot-side DICT_4X4_50 IDs0..4; optional detect/follow; print=docs/aruco-tags-50mm.pdf
 rule := observe≠actuate; ambiguity⇒q; secrets∉repo
 ```
 

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.116",
+    "opencv-contrib-python-headless>=4.13",
     "rpi-ws281x>=5.0",
     "smbus2>=0.5",
     "spidev>=3.8",

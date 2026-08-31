@@ -9,10 +9,14 @@ User=advanced
 Group=advanced
 WorkingDirectory=/home/advanced/whats-that-smoke
 ExecStart=/home/advanced/whats-that-smoke/.venv/bin/uvicorn whats_that_smoke.web:app --host 0.0.0.0 --port 8765
+# Freeze the controller before the independent brake command, preventing an
+# autonomous loop from rewriting motor PWM during shutdown.
+ExecStop=/bin/kill -STOP $MAINPID
+ExecStop=/home/advanced/whats-that-smoke/.venv/bin/wts emergency-stop
 Restart=on-failure
 RestartSec=2
 KillSignal=SIGINT
-TimeoutStopSec=5
+TimeoutStopSec=2
 NoNewPrivileges=true
 Environment=PYTHONUNBUFFERED=1
 
