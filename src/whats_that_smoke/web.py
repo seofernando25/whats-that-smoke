@@ -103,6 +103,8 @@ class RobotController:
         self.lock = asyncio.Lock(); self.hw_lock = threading.RLock()
         self.clients = {}; self.last_drive = 0.0
         self.guard_stop = threading.Event(); self.guard_thread = None
+        self.sidestep_direction = 0
+        self.sidestep_task: asyncio.Task | None = None
 
     async def start(self):
         self.bus = SMBus(1); self.bus.read_byte_data(0x40, 0); _configure_pca9685(self.bus); _stop_wheels(self.bus)
@@ -154,27 +156,82 @@ class RobotController:
                 elif duty < 0: _set_pwm(self.bus, fwd, 0); _set_pwm(self.bus, rev, abs(duty))
                 else: _set_pwm(self.bus, rev, 4095); _set_pwm(self.bus, fwd, 4095)
 
+    def _apply_vector(self, forward: float, turn: float, limit: int, reason: str = "drive") -> None:
+        motor_forward = -forward
+        left, right = motor_forward + turn, motor_forward - turn
+        scale = max(1.0, abs(left), abs(right))
+        wheels = {
+            "front-left": round(left / scale * limit), "rear-left": round(left / scale * limit),
+            "front-right": round(right / scale * limit), "rear-right": round(right / scale * limit),
+        }
+        self._write(wheels); self.last_drive = time.monotonic()
+        self.state.forward = forward; self.state.turn = turn; self.state.speed_limit = limit; self.state.wheels = wheels
+        self.state.stopped = not any(wheels.values()); self.state.reason = "command-zero" if self.state.stopped else reason; self.state.revision += 1
+
+    def _cancel_sidestep(self) -> None:
+        self.sidestep_direction = 0
+        task = self.sidestep_task
+        if task and task is not asyncio.current_task():
+            task.cancel()
+
+    async def sidestep(self, cid: str, direction: int, limit: int) -> None:
+        async with self.lock:
+            if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
+            if aruco.follow: raise PermissionError("disable ArUco follow before side-step")
+            direction = max(-1, min(1, int(direction))); limit = max(500, min(1800, int(limit)))
+            self.sidestep_direction = direction
+            self.state.strafe = float(direction)
+            if direction and (self.sidestep_task is None or self.sidestep_task.done()):
+                self.sidestep_task = asyncio.create_task(self._sidestep_loop(cid, limit), name="classical-sidestep")
+        await self.broadcast()
+
+    @staticmethod
+    def sidestep_phases(direction: int) -> tuple[tuple[float, float, float], ...]:
+        return (
+            (0.0, direction * 0.65, 0.16),
+            (0.55, 0.0, 0.20),
+            (0.0, -direction * 0.65, 0.32),
+            (-0.55, 0.0, 0.20),
+            (0.0, direction * 0.65, 0.16),
+        )
+
+    async def _sidestep_loop(self, cid: str, limit: int) -> None:
+        # Lie-bracket maneuver for a differential/skid-steer chassis. The 1:2:1
+        # turn durations restore heading; forward/reverse legs cancel longitude.
+        try:
+            while self.sidestep_direction:
+                direction = self.sidestep_direction
+                for forward, turn, duration in self.sidestep_phases(direction):
+                    async with self.lock:
+                        if self.state.owner != cid or not self.state.armed: return
+                        self._apply_vector(forward, turn, limit, "side-step")
+                    await self.broadcast()
+                    await asyncio.sleep(duration)
+            async with self.lock:
+                if self.state.owner == cid and self.state.armed:
+                    self._apply_vector(0.0, 0.0, limit, "side-step-complete")
+                    self.state.strafe = 0.0
+            await self.broadcast()
+        except asyncio.CancelledError:
+            pass
+        finally:
+            self.sidestep_task = None
+
     async def drive(self, cid, forward, strafe, turn, limit, autonomous=False):
+        if forward or turn:
+            self._cancel_sidestep()
         async with self.lock:
             if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
             if aruco.follow and not autonomous: raise PermissionError("disable ArUco follow before manual drive")
             if not all(math.isfinite(value) for value in (forward, strafe, turn)): raise ValueError
             forward = max(-1., min(1., forward)); strafe = max(-1., min(1., strafe)); turn = max(-1., min(1., turn)); limit = max(500, min(1800, limit))
-            motor_forward = -forward
-            mixed = {
-                "front-left": motor_forward + strafe + turn,
-                "rear-left": motor_forward - strafe + turn,
-                "front-right": motor_forward - strafe - turn,
-                "rear-right": motor_forward + strafe - turn,
-            }
-            scale = max(1., *(abs(value) for value in mixed.values()))
-            wheels = {name: round(value / scale * limit) for name, value in mixed.items()}
-            self._write(wheels); self.last_drive = time.monotonic()
-            self.state.forward = forward; self.state.strafe = strafe; self.state.turn = turn; self.state.speed_limit = limit; self.state.wheels = wheels
-            self.state.stopped = not any(wheels.values()); self.state.reason = "command-zero" if self.state.stopped else "drive"; self.state.revision += 1
+            if strafe: raise ValueError("use side-step command for ordinary wheels")
+            self.state.strafe = 0.0
+            self._apply_vector(forward, turn, limit)
         await self.broadcast()
 
     async def stop(self, reason, release=False):
+        self._cancel_sidestep()
         async with self.lock:
             with self.hw_lock:
                 if self.bus: _stop_wheels(self.bus)
@@ -224,6 +281,7 @@ async def websocket_endpoint(ws: WebSocket):
             try:
                 m = json.loads(await ws.receive_text()); kind = m.get("type")
                 if kind == "drive": await controller.drive(cid, float(m.get("forward",0)), float(m.get("strafe",0)), float(m.get("turn",0)), int(m.get("speed_limit",1800)))
+                elif kind == "sidestep": await controller.sidestep(cid, int(m.get("direction",0)), int(m.get("speed_limit",1200)))
                 elif kind == "arm": await controller.arm(cid)
                 elif kind == "camera": await controller.camera_move(cid, str(m.get("axis")), int(m.get("delta", 0)))
                 elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"))

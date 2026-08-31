@@ -19,8 +19,10 @@ arm := explicit/session-local; reconnect=>disarmed
 ```text
 server := owner+vector+speed+wheels+reason+revision
 one-controller; observers=N
-mix.mecanum := FL=f+s+r; RL=f-s+r; FR=f-s-r; RR=f+s-r; normalize≤1
-strafe requires X-roller mecanum/omni geometry; ordinary wheels=>lateral scrub, no true translation
+drive.mix := left=f+r; right=f-r; normalize≤1
+side-step ordinary/skid-steer := turn(d·θ) > forward(l) > turn(-d·2θ) > reverse(l) > turn(d·θ)
+side-step timing := θ-phase=.16s@.65; translation=.20s@.55; repeat while A|D held
+result ideal := longitudinal≈0; heading∆≈0; lateral≈2·l*sin(θ); open-loop drift=>calibration required
 motor polarity := forward+rotation intent inverted at output (physical chassis correction)
 camera := pan ch8 + tilt ch9; center=1500us; step=25us; bounds=1000..2000us
 camera.pan polarity := ArrowLeft=>+25us; ArrowRight=>-25us [physical correction]

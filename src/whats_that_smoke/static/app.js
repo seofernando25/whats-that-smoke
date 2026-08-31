@@ -42,7 +42,7 @@ function drawAruco(next) {
 function vector() {
   return {
     forward: (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0),
-    strafe: (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
+    strafe: 0,
     turn: (keys.has("KeyQ") ? 1 : 0) - (keys.has("KeyE") ? 1 : 0),
   };
 }
@@ -94,7 +94,9 @@ function connect() {
     connection.className = "connection online";
     connection.lastChild.textContent = " Online";
     heartbeat = setInterval(() => send({ type: "heartbeat" }), 200);
-    driveRefresh = setInterval(() => { if (keys.size && state.armed && state.you_are_owner) drive(); }, 150);
+    driveRefresh = setInterval(() => {
+      if (["KeyW", "KeyS", "KeyQ", "KeyE"].some(key => keys.has(key)) && state.armed && state.you_are_owner) drive();
+    }, 150);
   });
   socket.addEventListener("message", (event) => {
     const message = JSON.parse(event.data);
@@ -119,6 +121,12 @@ document.addEventListener("keydown", (event) => {
     const [axis, delta] = moves[event.code]; send({ type: "camera", axis, delta }); return;
   }
   if (!["KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(event.code) || event.repeat) return;
+  if (["KeyA", "KeyD"].includes(event.code)) {
+    event.preventDefault(); keys.add(event.code);
+    document.querySelector(`[data-key="${event.code}"]`)?.classList.add("active");
+    const direction = keys.has("KeyA") === keys.has("KeyD") ? 0 : keys.has("KeyA") ? 1 : -1;
+    send({ type: "sidestep", direction, speed_limit: Number(speed.value) }); return;
+  }
   event.preventDefault(); keys.add(event.code); drive();
 });
 document.addEventListener("keyup", (event) => {
@@ -126,6 +134,12 @@ document.addEventListener("keyup", (event) => {
     event.preventDefault(); document.querySelector(`[data-key="${event.code}"]`)?.classList.remove("active"); return;
   }
   if (!["KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(event.code)) return;
+  if (["KeyA", "KeyD"].includes(event.code)) {
+    event.preventDefault(); keys.delete(event.code);
+    document.querySelector(`[data-key="${event.code}"]`)?.classList.remove("active");
+    const direction = keys.has("KeyA") === keys.has("KeyD") ? 0 : keys.has("KeyA") ? 1 : -1;
+    send({ type: "sidestep", direction, speed_limit: Number(speed.value) }); return;
+  }
   event.preventDefault(); keys.delete(event.code); drive();
 });
 $("#stop").addEventListener("click", () => stop("button-stop"));
