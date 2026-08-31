@@ -15,7 +15,8 @@ capture := 30fps; exposure=sport; denoise=off; objective=short motion blur
 rate := <=30Hz; overlay:=all; follow-target:=ID-lock then largest/closest
 corners := subpixel refinement; standard detector (low-latency)
 continuity := KLT[velocity-init,35px,L4,FB<=4px] > MOSSE[context=1.8x] > CV-predict
-visual TTL := flow=.8s; correlation=1.0s; prediction=1.2s; dashed+source+confidence
+visual TTL from last decode (absolute) := flow=.65s; correlation=.85s; prediction=1.0s
+confidence floor∅; confidence<.28=>drop; fallback cannot self-refresh indefinitely
 control TTL := fresh decoded ID<=.35s; visual optimism never broadens motion authority
 association := decoded ID; no appearance model/Hungarian required for unique fiducials
 state := target-ID alpha-beta constant-velocity[x,z]; α=.70 β=.12; reset(ID-change|dt>.5s)

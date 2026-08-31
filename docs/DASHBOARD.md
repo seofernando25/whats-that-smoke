@@ -3,7 +3,7 @@
 ```text
 url := http://192.168.8.170:8765
 transport := browser ↔ WebSocket(/ws) ↔ Pi-authoritative controller ↔ PCA9685
-keys := W forward; S reverse; A rotate-left; D rotate-right; arrows=pan/tilt; Space STOP
+keys := W/S forward/reverse; A/D strafe-left/right; Q/E rotate-left/right; arrows=pan/tilt; Space STOP
 input := keyboard-only movement; UI keycaps=status indicators, not controls
 touch := directional pad + STOP
 slider := speed_limit 500..1800; default=1800
@@ -19,7 +19,8 @@ arm := explicit/session-local; reconnect=>disarmed
 ```text
 server := owner+vector+speed+wheels+reason+revision
 one-controller; observers=N
-mix := left=forward+turn; right=forward-turn; normalize≤1
+mix.mecanum := FL=f+s+r; RL=f-s+r; FR=f-s-r; RR=f+s-r; normalize≤1
+strafe requires X-roller mecanum/omni geometry; ordinary wheels=>lateral scrub, no true translation
 motor polarity := forward+rotation intent inverted at output (physical chassis correction)
 camera := pan ch8 + tilt ch9; center=1500us; step=25us; bounds=1000..2000us
 camera.pan polarity := ArrowLeft=>+25us; ArrowRight=>-25us [physical correction]

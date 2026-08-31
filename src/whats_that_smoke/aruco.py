@@ -260,7 +260,7 @@ class ArucoFollower:
         points = np.array(memory.detection.corners, dtype=np.float32)
         points = (points - old_center) * np.array([new_w / old_w, new_h / old_h], dtype=np.float32) + new_center
         age = now - memory.decoded_at
-        confidence = max(0.20, 0.72 * math.exp(-age / 1.2))
+        confidence = 0.72 * math.exp(-age / 0.75)
         return self.from_points(memory.detection.tag_id, points, True, source, age, confidence)
 
     def track_all(self, jpeg: bytes) -> list[Detection]:
@@ -301,7 +301,7 @@ class ArucoFollower:
                 )
                 for index, tag_id in enumerate(old_ids):
                     memory = self.tracks[tag_id]
-                    if tag_id in by_id or now - memory.visual_at > 0.8:
+                    if tag_id in by_id or now - memory.decoded_at > 0.65:
                         continue
                     sl = slice(index * 4, index * 4 + 4)
                     valid = forward_ok[sl].all() and backward_ok is not None and backward_ok[sl].all()
@@ -310,7 +310,7 @@ class ArucoFollower:
                         age = now - memory.decoded_at
                         tracked = self.from_points(
                             tag_id, new_points[sl].reshape(4, 2), True, "flow", age,
-                            max(0.25, 0.88 * math.exp(-age / 1.0)),
+                            0.88 * math.exp(-age / 0.65),
                         )
                         if tracked:
                             flow_candidates[tag_id] = tracked
@@ -333,13 +333,13 @@ class ArucoFollower:
                 continue
             correlation: Detection | None = None
             correlation_bbox: tuple[float, float, float, float] | None = None
-            if memory.tracker is not None and now - memory.visual_at <= 1.0:
+            if memory.tracker is not None and now - memory.decoded_at <= 0.85:
                 ok, raw_bbox = memory.tracker.update(image)
                 if ok:
                     correlation_bbox = tuple(float(value) for value in raw_bbox)
                     correlation = self.transform_from_bbox(memory, correlation_bbox, "correlation", now)
             selected = flow_candidates.get(tag_id) or correlation
-            if selected is None and now - memory.visual_at <= 1.2:
+            if selected is None and now - memory.decoded_at <= 1.0:
                 dt = now - memory.updated_at
                 old_points = np.array(memory.detection.corners, dtype=np.float32)
                 center = np.array([memory.detection.center_x, memory.detection.center_y], dtype=np.float32)
@@ -349,8 +349,10 @@ class ArucoFollower:
                 points = (old_points - center) * scale + center + shift
                 age = now - memory.decoded_at
                 selected = self.from_points(
-                    tag_id, points, True, "predict", age, max(0.08, 0.42 * math.exp(-(now - memory.visual_at) / 0.45))
+                    tag_id, points, True, "predict", age, 0.42 * math.exp(-age / 0.45)
                 )
+            if selected is not None and selected.confidence < 0.28:
+                selected = None
             if selected is None:
                 continue
             self.update_motion(memory, selected, now)
@@ -432,7 +434,7 @@ class ArucoFollower:
             if distance_error <= 0.035 and abs(error_x) <= 0.08:
                 await self.controller.stop("aruco-target-reached", release=False)
             else:
-                await self.controller.drive(self.owner, forward, turn, 1300, autonomous=True)
+                await self.controller.drive(self.owner, forward, 0.0, turn, 1300, autonomous=True)
 
 
 def state_defaults() -> dict[str, Any]:

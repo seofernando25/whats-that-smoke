@@ -42,7 +42,8 @@ function drawAruco(next) {
 function vector() {
   return {
     forward: (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0),
-    turn: (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0),
+    strafe: (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
+    turn: (keys.has("KeyQ") ? 1 : 0) - (keys.has("KeyE") ? 1 : 0),
   };
 }
 
@@ -72,6 +73,7 @@ function render(next) {
   $("#arm").classList.toggle("armed", next.armed && next.you_are_owner);
   $("#clients").textContent = next.clients;
   $("#forward").textContent = next.forward.toFixed(2);
+  $("#strafe").textContent = next.strafe.toFixed(2);
   $("#turn").textContent = next.turn.toFixed(2);
   $("#watchdog").textContent = `${next.watchdog_ms} ms`;
   $("#pan").textContent = `${next.pan_us} µs`;
@@ -116,14 +118,14 @@ document.addEventListener("keydown", (event) => {
     const moves = { ArrowLeft: ["pan", 25], ArrowRight: ["pan", -25], ArrowUp: ["tilt", -25], ArrowDown: ["tilt", 25] };
     const [axis, delta] = moves[event.code]; send({ type: "camera", axis, delta }); return;
   }
-  if (!["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code) || event.repeat) return;
+  if (!["KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(event.code) || event.repeat) return;
   event.preventDefault(); keys.add(event.code); drive();
 });
 document.addEventListener("keyup", (event) => {
   if (event.code.startsWith("Arrow")) {
     event.preventDefault(); document.querySelector(`[data-key="${event.code}"]`)?.classList.remove("active"); return;
   }
-  if (!["KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) return;
+  if (!["KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE"].includes(event.code)) return;
   event.preventDefault(); keys.delete(event.code); drive();
 });
 $("#stop").addEventListener("click", () => stop("button-stop"));
