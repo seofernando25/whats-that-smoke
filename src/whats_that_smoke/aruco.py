@@ -3,18 +3,21 @@ from __future__ import annotations
 import asyncio
 import math
 import time
+from collections import deque
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .web import CameraStream, RobotController
 
-FRAME_WIDTH = 640
-FRAME_HEIGHT = 480
+FRAME_WIDTH = 1280
+FRAME_HEIGHT = 720
 TAG_SIZE_M = 0.050
 TARGET_DISTANCE_M = 0.30
-FOCAL_PX = 628.0  # OV5647 nominal 54 deg horizontal FOV at 640 px; calibrate for precision.
+FOCAL_PX = 968.0  # UC-788/B0165 nominal 67° HFOV at 1280 px; calibrate for precision.
 ALLOWED_IDS = frozenset(range(50))
+_ARUCO_CODEBOOK: tuple[Any, Any] | None = None
 
 
 @dataclass
@@ -58,8 +61,25 @@ class ArucoFollower:
         self.tracks: dict[int, TrackMemory] = {}
         self.target_id: int | None = None
         self.filter_state: tuple[float, float, float, float, float] | None = None
+        self.completed_at = deque(maxlen=90)
+        self.processing_ms = 0.0
+        self.decode_ms = 0.0
+        self.source_at = 0.0
+        self.skipped_frames = 0
+
+    def metrics(self) -> dict:
+        now = time.monotonic()
+        recent = [t for t in self.completed_at if now - t < 3]
+        fps = (len(recent) - 1) / (recent[-1] - recent[0]) if len(recent) > 1 and now - recent[-1] < 0.5 else 0.0
+        return {"aruco_fps": round(fps, 1), "aruco_processing_ms": round(self.processing_ms, 1),
+                "aruco_decode_ms": round(self.decode_ms, 1), "aruco_skipped_frames": self.skipped_frames,
+                "aruco_result_age_ms": round((now - self.source_at) * 1000) if self.source_at else None}
 
     def start(self) -> None:
+        import cv2
+        # Pi4 live-frame benchmark: two workers reduced median and p95 time
+        # versus four while leaving CPU available for capture and controls.
+        cv2.setNumThreads(2)
         self.task = asyncio.create_task(self.run(), name="aruco-follower")
 
     async def close(self) -> None:
@@ -76,6 +96,7 @@ class ArucoFollower:
         if follow:
             if self.controller.state.owner != client_id or not self.controller.state.armed:
                 raise PermissionError("arm controls before enabling ArUco follow")
+            await self.controller.stop("aruco-follow-start", release=False)
             self.owner = client_id
             self.enabled = True
             self.follow = True
@@ -170,13 +191,9 @@ class ArucoFollower:
         )
 
     @staticmethod
-    def detect_all(jpeg: bytes) -> list[Detection]:
+    @lru_cache(maxsize=1)
+    def detector():
         import cv2
-        import numpy as np
-
-        image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
-        if image is None:
-            return []
         dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         parameters = cv2.aruco.DetectorParameters()
         parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
@@ -185,22 +202,176 @@ class ArucoFollower:
         parameters.minCornerDistanceRate = 0.01
         parameters.minDistanceToBorder = 1
         parameters.errorCorrectionRate = 0.8
+        # Verified on the steeply foreshortened live ID 2: 4 px/cell rejects
+        # its bits; 8 px/cell decodes it at essentially the same total cost.
+        parameters.perspectiveRemovePixelPerCell = 8
         if hasattr(parameters, "useAruco3Detection"):
             parameters.useAruco3Detection = False
         detector = cv2.aruco.ArucoDetector(dictionary, parameters)
-        corners, ids, _ = detector.detectMarkers(image)
-        if ids is None:
-            return []
+        return dictionary, parameters, detector
+
+    @staticmethod
+    def detect_all(jpeg: bytes) -> list[Detection]:
+        import cv2
+        import numpy as np
+        image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+        return [] if image is None else ArucoFollower.detect_gray(image)
+
+    @staticmethod
+    def detect_gray(image: Any) -> list[Detection]:
+        dictionary, parameters, detector = ArucoFollower.detector()
+        corners, ids, rejected = detector.detectMarkers(image)
         candidates: list[Detection] = []
-        for raw_corners, raw_id in zip(corners, ids.flatten(), strict=True):
-            tag_id = int(raw_id)
-            if tag_id not in ALLOWED_IDS:
+        found_ids: set[int] = set()
+        if ids is not None:
+            for raw_corners, raw_id in zip(corners, ids.flatten(), strict=True):
+                tag_id = int(raw_id)
+                if tag_id not in ALLOWED_IDS:
+                    continue
+                points = raw_corners.reshape(4, 2)
+                detection = ArucoFollower.from_points(tag_id, points)
+                if detection:
+                    candidates.append(detection)
+                    found_ids.add(tag_id)
+
+        # OpenCV can find a marker-shaped quad yet reject its bits under blur,
+        # glare, or steep perspective. Re-sample only those quads after a
+        # perspective warp; strict black-border + dictionary-distance checks
+        # keep this cheap fallback from turning arbitrary rectangles into IDs.
+        for tag_id, points, distance in ArucoFollower.decode_rejected(
+            image, rejected, dictionary, parameters.errorCorrectionRate
+        ):
+            if tag_id in found_ids:
                 continue
-            points = raw_corners.reshape(4, 2)
-            detection = ArucoFollower.from_points(tag_id, points)
+            detection = ArucoFollower.from_points(
+                tag_id, points, source="decode-fallback", confidence=max(0.75, 1.0 - 0.15 * distance)
+            )
             if detection:
                 candidates.append(detection)
+                found_ids.add(tag_id)
         return sorted(candidates, key=lambda item: item.size_px, reverse=True)
+
+    @staticmethod
+    def decode_rejected(image: Any, rejected: Any, dictionary: Any, error_correction_rate: float):
+        """Decode high-confidence dictionary matches among rejected quads."""
+        import cv2
+        import numpy as np
+
+        global _ARUCO_CODEBOOK
+        if _ARUCO_CODEBOOK is None:
+            codebook = []
+            cell_size = 16
+            for tag_id in ALLOWED_IDS:
+                marker = cv2.aruco.generateImageMarker(
+                    dictionary, tag_id, cell_size * 6, borderBits=1
+                )
+                code = np.empty((4, 4), dtype=np.uint8)
+                for row in range(4):
+                    for col in range(4):
+                        patch = marker[
+                            (row + 1) * cell_size + 4:(row + 1) * cell_size + 12,
+                            (col + 1) * cell_size + 4:(col + 1) * cell_size + 12,
+                        ]
+                        code[row, col] = int(float(patch.mean()) >= 127.5)
+                codebook.append((tag_id, code))
+            _ARUCO_CODEBOOK = (
+                np.array([tag_id for tag_id, _ in codebook]),
+                np.array([[np.rot90(code, turn) for turn in range(4)] for _, code in codebook]),
+            )
+
+        decoded = []
+        cell_size = 16
+        destination = np.array(
+            [[0, 0], [cell_size * 6 - 1, 0], [cell_size * 6 - 1, cell_size * 6 - 1], [0, cell_size * 6 - 1]],
+            dtype=np.float32,
+        )
+        max_errors = min(dictionary.maxCorrectionBits, round(dictionary.maxCorrectionBits * error_correction_rate))
+        for raw in rejected:
+            points = raw.reshape(4, 2).astype(np.float32)
+            if not cv2.isContourConvex(points) or abs(float(cv2.contourArea(points))) < 100:
+                continue
+            if min(math.dist(points[i], points[(i + 1) % 4]) for i in range(4)) < 12:
+                continue
+            warped = cv2.warpPerspective(
+                image, cv2.getPerspectiveTransform(points, destination), (cell_size * 6, cell_size * 6)
+            )
+            threshold, _ = cv2.threshold(warped, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+            if not 15 < threshold < 240:
+                continue
+            means = warped.reshape(6, cell_size, 6, cell_size)[:, 4:12, :, 4:12].mean(axis=(1, 3))
+            tag_ids, references = _ARUCO_CODEBOOK
+            match = ArucoFollower.decode_cells(means, threshold, references, max_errors)
+            if match is None and float(np.ptp(means)) >= 60 and min(
+                math.dist(points[i], points[(i + 1) % 4]) for i in range(4)
+            ) >= 24:
+                # OpenCV normally refines corners after identifying the ID.
+                # For shallow views the raw contour corners can shift the
+                # projected cell centers enough to prevent that first decode.
+                refined = points.copy()
+                cv2.cornerSubPix(image, refined, (5, 5), (-1, -1),
+                                 (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, .03))
+                if (np.max(np.linalg.norm(refined - points, axis=1)) <= 8
+                        and cv2.isContourConvex(refined)):
+                    retry = cv2.warpPerspective(image, cv2.getPerspectiveTransform(refined, destination), (96, 96))
+                    retry_threshold, _ = cv2.threshold(retry, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+                    # Smaller cell-center windows avoid blurred cell edges.
+                    retry_means = retry.reshape(6, 16, 6, 16)[:, 6:10, :, 6:10].mean(axis=(1, 3))
+                    match = ArucoFollower.decode_cells(retry_means, retry_threshold, references, 0)
+                    if match is not None:
+                        points = refined
+            if match is None:
+                continue
+            best, rotation, distance = match
+            tag_id = int(tag_ids[best])
+            # Put the corners in marker-canonical order for solvePnP.
+            canonical_points = np.roll(points, rotation, axis=0)
+            decoded.append((tag_id, canonical_points, distance))
+        return decoded
+
+    @staticmethod
+    def decode_cells(means, threshold, references, max_errors):
+        """Bounded alternate thresholds require exact, unambiguous codes.
+
+        Foreshortening mixes adjacent white pixels into black cells. Otsu on
+        the entire warped patch can then under-estimate the cell threshold.
+        Retain the original error allowance only at the original threshold;
+        alternate readings must have a measurable black/white intensity gap.
+        """
+        import numpy as np
+        border = np.concatenate((means[0], means[-1], means[1:-1, 0], means[1:-1, -1]))
+        inner = means[1:5, 1:5]
+        bits = inner >= threshold
+        distances = np.count_nonzero(bits != references, axis=(2, 3))
+        best_per_id = distances.min(axis=1)
+        order = np.argsort(best_per_id)
+        best = int(order[0])
+        distance = int(best_per_id[best])
+        if ((border < threshold).sum() >= 18 and distance <= max_errors
+                and (len(order) < 2 or best_per_id[order[1]] > distance + 1)):
+            return best, int(distances[best].argmin()), distance
+
+        low, high = np.percentile(means, (10, 90))
+        span = high - low
+        if span < 40:
+            return None
+        alternatives = threshold + span * np.array([-.24, -.16, -.08, .08, .16, .24])
+        readings = inner[None, :, :] >= alternatives[:, None, None]
+        errors = np.count_nonzero(readings[:, None, None, :, :] != references[None, :, :, :, :], axis=(3, 4))
+        matches = set()
+        for index, candidate_threshold in enumerate(alternatives):
+            exact = np.argwhere(errors[index] == 0)
+            if len(exact) != 1 or (border < candidate_threshold).sum() < 18:
+                continue
+            white = readings[index]
+            if not white.any() or white.all():
+                continue
+            if inner[white].min() - inner[~white].max() < max(6.0, .08 * span):
+                continue
+            matches.add(tuple(int(v) for v in exact[0]))
+        if len(matches) == 1:
+            best, rotation = matches.pop()
+            return best, rotation, 0
+        return None
 
     @staticmethod
     def detect(jpeg: bytes) -> Detection | None:
@@ -268,18 +439,20 @@ class ArucoFollower:
         import cv2
         import numpy as np
 
-        image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_COLOR)
+        image = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         if image is None:
             return []
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = image
         now = time.monotonic()
-        measured = self.detect_all(jpeg)
+        measured = self.detect_gray(gray)
+        self.decode_ms = (time.monotonic() - now) * 1000
         by_id = {item.tag_id: item for item in measured}
 
         flow_candidates: dict[int, Detection] = {}
 
-        if self.previous_gray is not None and self.tracks:
-            old_ids = list(self.tracks)
+        old_ids = [tag_id for tag_id, memory in self.tracks.items()
+                   if tag_id not in by_id and now - memory.decoded_at <= 0.65]
+        if self.previous_gray is not None and old_ids:
             old_points = np.array(
                 [[point for point in self.tracks[tag_id].detection.corners] for tag_id in old_ids], dtype=np.float32
             ).reshape(-1, 1, 2)
@@ -324,7 +497,9 @@ class ArucoFollower:
             else:
                 self.update_motion(memory, detection, now)
                 memory.decoded_at = now
-            memory.tracker = self.create_tracker(image, bbox)
+            # Successful decoding already provides the measurement. Initialize
+            # correlation lazily, on the previous frame, only if flow fails.
+            memory.tracker = None
             memory.bbox = bbox
             next_tracks[tag_id] = memory
 
@@ -333,10 +508,17 @@ class ArucoFollower:
                 continue
             correlation: Detection | None = None
             correlation_bbox: tuple[float, float, float, float] | None = None
-            if memory.tracker is not None and now - memory.decoded_at <= 0.85:
-                ok, raw_bbox = memory.tracker.update(image)
+            if tag_id not in flow_candidates and self.previous_gray is not None and now - memory.decoded_at <= 0.85:
+                # Bound MOSSE's FFT cost even for large/nearby marker boxes.
+                scale = 0.25
+                if memory.tracker is None and memory.bbox is not None:
+                    memory.tracker = self.create_tracker(
+                        cv2.resize(self.previous_gray, None, fx=scale, fy=scale),
+                        tuple(v * scale for v in memory.bbox),
+                    )
+                ok, raw_bbox = memory.tracker.update(cv2.resize(gray, None, fx=scale, fy=scale)) if memory.tracker is not None else (False, None)
                 if ok:
-                    correlation_bbox = tuple(float(value) for value in raw_bbox)
+                    correlation_bbox = tuple(float(value) / scale for value in raw_bbox)
                     correlation = self.transform_from_bbox(memory, correlation_bbox, "correlation", now)
             selected = flow_candidates.get(tag_id) or correlation
             if selected is None and now - memory.decoded_at <= 1.0:
@@ -358,6 +540,9 @@ class ArucoFollower:
             self.update_motion(memory, selected, now)
             if correlation_bbox is not None:
                 memory.bbox = correlation_bbox
+            else:
+                memory.tracker = None
+                memory.bbox = self.expanded_bbox(selected, image.shape[1], image.shape[0])
             next_tracks[tag_id] = memory
             by_id[tag_id] = selected
 
@@ -367,17 +552,37 @@ class ArucoFollower:
 
     async def run(self) -> None:
         while True:
-            await asyncio.sleep(0.030)
+            await asyncio.sleep(0.005 if self.enabled else 0.030)
             if not self.enabled:
                 continue
-            frame, sequence = self.camera.latest()
+            frame, sequence, captured_at = self.camera.latest_sample()
+            if not captured_at or time.monotonic() - captured_at > 0.45:
+                if self.controller.state.aruco_status != "aruco-frame-stale":
+                    self.clear_detection("aruco-frame-stale")
+                    if self.follow:
+                        await self.controller.stop("aruco-frame-stale", release=False)
+                    await self.controller.broadcast()
+                continue
             if not frame or sequence == self.last_sequence:
                 if self.follow and time.monotonic() - self.last_detection_at > 0.45:
                     self.clear_detection("aruco-frame-stale")
                     await self.controller.stop("aruco-frame-stale", release=False)
                 continue
+            if self.last_sequence >= 0:
+                self.skipped_frames += max(0, sequence - self.last_sequence - 1)
             self.last_sequence = sequence
+            started = time.monotonic()
             detections = await asyncio.to_thread(self.track_all, frame)
+            completed = time.monotonic()
+            self.processing_ms = (completed - started) * 1000
+            self.completed_at.append(completed)
+            self.source_at = captured_at
+            if completed - captured_at > 0.45:
+                self.clear_detection("aruco-result-stale")
+                if self.follow:
+                    await self.controller.stop("aruco-result-stale", release=False)
+                await self.controller.broadcast()
+                continue
             if not detections:
                 # A tiny/distant marker may miss an individual compressed
                 # frame. Preserve the previous overlay/command briefly rather

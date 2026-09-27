@@ -2,6 +2,18 @@
 
 `snapshot:=2026-08-29; mode:=observe-only`
 
+## vision update · 2026-09-27
+
+```text
+deployed := optimized aruco.py + camera/vision telemetry + UI; service restarted; ArUco ON/FOLLOW OFF restored
+camera current := UC-788/Arducam mono; 1280x720/30fps; capture fresh during validation
+observed := native ID2 decoding now succeeds; fallback retained; 28.3 processed fps median over15s; 28.9ms median compute
+rollback := Pi /home/advanced/wts-vision-backup-bqgZIM/{aruco.py,web.py,app.js,index.html}
+detail := docs/ARUCO.md#performance
+shallow-view followup := corner refinement before retry decode + narrow cell-center sampling + bounded thresholds; live16s/40polls: ID2 visible40/40; fresh resampled33 + flow7; processed22.7fps median; compute33.8ms median/p95=59ms; camera30fps
+shallow-view rollback := Pi /home/advanced/wts-angle-backup-VqDnUW/aruco.py
+```
+
 ## ✓
 
 ```text
@@ -62,4 +74,51 @@ BLE = 256-sample retention + cumulative ACK/retry; desktop fault-injection repor
 Pi BLE/runtime = unverified; separate uv environment, Python>=3.14
 car integration = standalone observation only; no controller or actuation changes
 position = experimental XY dead reckoning; not navigation truth
+```
+
+## 2026-09-27 car-dashboard USB integration
+
+```text
+nano := Nano33BLESenseRev2@USB/by-id; sensor=BMI270
+firmware := firmware/nano_imu; transport=115200/newline-json; observed≈100Hz
+dashboard := accel[g]+gyro[°/s]+rate+sample-age in /ws + top-right overlay
+reconnect := USB unplug/replug auto-retry; actuator coupling=∅
+BLE companion := arduino/ remains independent experiment; main dashboard uses USB
+```
+
+## 2026-09-27 relative-heading HUD
+
+```text
+compass := browser HUD; relative gyro-yaw integrated on Pi; zero=still pose; clockwise-positive
+calibration := continuous 3s still; rest debounce=500ms; gyro bias adapts only after rest
+gaps>150ms := preserve heading; do-not-integrate unknown interval
+limitations := no north reference; no translation/ground-track from IMU alone; skid needs external visual/encoder reference
+```
+
+## 2026-09-27 gyro manual drive
+
+```text
+geometry := user-confirmed wheelbase=210mm; track=149mm; center-to-center
+observation := all wheels contact at rest; CCW => rear-left + front-right consistently slip
+cause := unverified; tire scrub/load transfer plausible; gyro cannot identify individual wheel traction
+Q/E := closed-loop yaw rate; A/D := heading-anchored side-step; W/S := ramped duty
+limits := no position feedback; no cliff protection; no traction guarantee; gains require floor trial
+verification := simulated plant + mocked hardware only; no physical maneuver during deployment
+regression := user reports pivot failure + sidestep-turn-timeout; hidden1500cap + low near-target duty plausible, not proven
+revision := cap restored to slider≤1800; stationary-yaw breakaway90%; W/S+A/D steering arcs
+verification-new := synthetic80%-deadzone plant + keyboard mappings; real traction/gains still require floor test
+```
+
+## 2026-09-27 short floor arc tuning
+
+```text
+permission := user confirmed floor + clear area; three bounded forward arc trials, stop/disarm between
+baseline35% := left .7s@1800; yaw∆=-1.59°; peak=7.11°/s; median=-.78°/s
+candidate65% := left .7s@1800; yaw∆=-4.38°; peak=18.58°/s; median=-5.17°/s
+deployed := ARC_CORRECTION=.65; same-direction wheels; existing gyro/input watchdogs retained
+right65% := aborted by trial-only |accel.z|<.8g check; finally STOP; verified disarmed+wheels0
+interpretation := stronger left arc measured; right/reverse/repeatability unverified; rocking vs vibration unknown
+next := user inspect/report right-trial motion before further automated runs; no retry after safety abort
+tool := tools/tune_arc.py; max .8s; no autonomous retries; fresh camera+IMU required
+camera := stale before testing; service restart restored≈30fps; no camera recovery code change
 ```

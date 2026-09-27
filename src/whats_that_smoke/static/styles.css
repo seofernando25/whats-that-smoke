@@ -20,10 +20,33 @@ main { width: 100vw; height: 100vh; margin: 0; padding: 0; }
 .feed-label { top: 12px; left: 12px; display: flex; gap: 14px; padding: 6px 8px; font: 600 11px ui-monospace, monospace; }
 
 .status { top: 12px; right: 12px; width: 250px; margin: 0; padding: 8px 10px; font: 11px ui-monospace, monospace; }
-.status div { display: flex; justify-content: space-between; gap: 14px; padding: 2px 0; }
-.status dt { color: #68727d; text-transform: uppercase; }
-.status dd { margin: 0; font-weight: 700; text-align: right; }
+.status > div:not(.heading-widget) { display: flex; justify-content: space-between; gap: 14px; padding: 2px 0; }
+.status > div > dt { color: #68727d; text-transform: uppercase; }
+.status > div > dd { margin: 0; font-weight: 700; text-align: right; }
 #motion.moving { color: #b45309; }
+
+.heading-widget { display: grid; grid-template-columns: 84px 1fr; gap: 10px; align-items: center; padding: 0 0 8px; margin-bottom: 4px; border-bottom: 1px solid rgb(0 0 0 / 14%); }
+.heading-dial { position: relative; width: 82px; height: 82px; border: 1px solid #8b949e; border-radius: 50%; background: radial-gradient(circle, #fff 0 57%, #edf0f2 58% 100%); color: #68727d; font: 700 9px ui-monospace, monospace; }
+.heading-dial::before, .heading-dial::after { position: absolute; content: ""; background: #bdc4ca; }
+.heading-dial::before { top: 6px; bottom: 6px; left: 50%; width: 1px; }
+.heading-dial::after { top: 50%; right: 6px; left: 6px; height: 1px; }
+.heading-dial span { position: absolute; z-index: 1; }
+.compass-north { top: 3px; left: 50%; transform: translateX(-50%); color: #b42318; }
+.compass-east { top: 50%; right: 5px; transform: translateY(-50%); }
+.compass-south { bottom: 3px; left: 50%; transform: translateX(-50%); }
+.compass-west { top: 50%; left: 5px; transform: translateY(-50%); }
+.heading-dial i { position: absolute; z-index: 2; inset: 15px 0 15px; transform: rotate(0deg); transform-origin: center; transition: transform 120ms linear; }
+.heading-dial i::before { position: absolute; top: 0; left: 50%; width: 0; height: 0; border-right: 5px solid transparent; border-bottom: 25px solid #e11d48; border-left: 5px solid transparent; content: ""; transform: translateX(-50%); }
+.heading-dial b { position: absolute; z-index: 3; top: 50%; left: 50%; width: 7px; height: 7px; border: 1px solid #fff; background: #17202a; transform: translate(-50%, -50%); }
+.heading-copy { min-width: 0; }
+.heading-copy dt { color: #68727d; font-size: 9px; text-transform: uppercase; }
+.heading-copy dd { margin: 2px 0 1px; color: #17202a; font: 700 22px ui-monospace, monospace; text-align: left; }
+.heading-copy dd small { margin-left: 1px; font-size: 11px; }
+.heading-copy > small { display: block; min-height: 13px; color: #68727d; font: 600 8px ui-monospace, monospace; }
+.heading-copy button { margin-top: 5px; padding: 3px 4px; border: 1px solid #aeb5bc; background: #fff; color: #17202a; font: 700 8px ui-monospace, monospace; cursor: pointer; }
+.heading-copy button:hover { background: #f0f2f4; }
+.heading-widget.uncalibrated .heading-dial { opacity: .45; }
+.heading-widget.moving .heading-copy > small { color: #1769aa; }
 
 .key-overlay { bottom: 68px; left: 12px; padding: 7px 9px; font: 11px ui-monospace, monospace; }
 .key-overlay div { display: flex; align-items: center; gap: 4px; }
@@ -48,7 +71,7 @@ main { width: 100vw; height: 100vh; margin: 0; padding: 0; }
 
 @media (max-width: 680px) {
   main { width: 100%; padding: 0; }
-  .status { width: 210px; }
+  .status { width: 230px; }
   .control-bar { grid-template-columns: repeat(5, auto); overflow-x: auto; }
   .control-bar label { display: none; }
   .control-bar input { grid-column: 2; }

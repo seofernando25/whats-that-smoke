@@ -36,6 +36,7 @@ deploy := Pi-local hardware service; source mirror=GitHub
 cloud-runtime := ∅ by design; GPIO/I2C/camera live on Pi
 browser-vision := local model/runtime assets; inference runs on dashboard client
 aruco := robot-side DICT_4X4_50 IDs0..4; optional detect/follow; print=docs/aruco-tags-50mm.pdf
+imu := Nano33BLESenseRev2/BMI270 -> USB serial≈100Hz -> dashboard overlay + relative yaw compass (3s stationary zero; no true north)
 rule := observe≠actuate; ambiguity⇒q; secrets∉repo
 ```
 
