@@ -51,3 +51,15 @@ PCB-v3 protocol/pin map = ?; public FNK0043 docs describe v1/v2 only
 3 test sensors -> servo -> motors, one subsystem/step
 4 each effect -> verify + append snapshot
 ```
+
+## 2026-09-27 Arduino companion import
+
+```text
+arduino = Nano 33 BLE Sense Rev2; firmware + receiver + dashboard @ ../arduino/
+accel+gyro = desktop BLE streaming observed (~98Hz normal trial)
+magnetometer = unavailable on this board; no absolute heading
+BLE = 256-sample retention + cumulative ACK/retry; desktop fault-injection reports committed
+Pi BLE/runtime = unverified; separate uv environment, Python>=3.14
+car integration = standalone observation only; no controller or actuation changes
+position = experimental XY dead reckoning; not navigation truth
+```

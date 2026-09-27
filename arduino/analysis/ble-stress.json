@@ -1,0 +1,38 @@
+[
+  {
+    "received": 2513,
+    "delivered": 1967,
+    "duplicates": 536,
+    "injected_drops": 0,
+    "unrecoverable": 0,
+    "recovered": 30,
+    "test": "normal",
+    "max_sensor_interval_ms": 25.626,
+    "sensor_rate_hz": 97.86109786911193,
+    "max_delivery_pause_s": 0.8999293999995643
+  },
+  {
+    "received": 3754,
+    "delivered": 1716,
+    "duplicates": 1126,
+    "injected_drops": 375,
+    "unrecoverable": 0,
+    "recovered": 198,
+    "test": "drop_each_10th_notification",
+    "max_sensor_interval_ms": 30.021,
+    "sensor_rate_hz": 85.6369891472718,
+    "max_delivery_pause_s": 0.5719026769993434
+  },
+  {
+    "received": 2764,
+    "delivered": 1878,
+    "duplicates": 764,
+    "injected_drops": 0,
+    "unrecoverable": 0,
+    "recovered": 73,
+    "test": "pause_ack_1_second",
+    "max_sensor_interval_ms": 29.612,
+    "sensor_rate_hz": 93.41075925728245,
+    "max_delivery_pause_s": 0.7348692449995724
+  }
+]

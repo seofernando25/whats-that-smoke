@@ -40,3 +40,7 @@ rule := observe≠actuate; ambiguity⇒q; secrets∉repo
 ```
 
 Refs: [Freenove FNK0043](https://github.com/Freenove/Freenove_4WD_Smart_Car_Kit_for_Raspberry_Pi) · [official docs](https://docs.freenove.com/projects/fnk0043/en/latest/)
+
+## Arduino Sense companion
+
+See [arduino/README.md](arduino/README.md) for Nano 33 BLE Sense Rev2 firmware, acknowledged BLE streaming, a VQF orientation dashboard on port 8766, and transport stress scripts. Run it independently on a laptop or provision it on the Pi; it does not actuate the car.

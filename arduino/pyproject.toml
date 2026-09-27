@@ -1,0 +1,13 @@
+[project]
+name = "ardu-ble-gyro-playground"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "bleak>=3.0.2",
+    "fastapi>=0.141.1",
+    "numpy>=2.5.3",
+    "pyserial>=3.5",
+    "scipy>=1.18.1",
+    "uvicorn[standard]>=0.54.0",
+    "vqf>=2.1.2",
+]
