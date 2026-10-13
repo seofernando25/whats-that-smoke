@@ -4,9 +4,9 @@ import asyncio
 import math
 import time
 from unittest.mock import patch
+from whats_that_smoke.motion import GyroMotion, MotionFault, angle_error, ramp_wheels
 
 from whats_that_smoke.web import RobotController
-from whats_that_smoke.motion import GyroMotion, MotionFault, angle_error, ramp_wheels
 
 
 def drive_vector(forward: float, strafe: float, turn: float) -> dict[str, int]:
@@ -15,7 +15,7 @@ def drive_vector(forward: float, strafe: float, turn: float) -> dict[str, int]:
     controller.state.armed = True
     written: dict[str, int] = {}
     controller._write = lambda wheels: written.update(wheels)  # type: ignore[method-assign]
-    controller._apply_vector(forward, turn, 1000)
+    asyncio.run(controller.drive("test", forward, strafe, turn, 1000))
     return written
 
 
@@ -35,6 +35,64 @@ def test_rotate_left_pattern() -> None:
         "front-right": -1000,
         "rear-right": -1000,
     }
+
+
+def mock_controller():
+    controller = RobotController()
+    controller.state.owner = "test"
+    controller.state.armed = True
+    controller._write = lambda wheels: None
+    return controller
+
+
+def test_direct_turn_without_gyro():
+    controller = mock_controller()
+    asyncio.run(controller.drive("test", 0, 0, 1, 1000))
+    assert not controller.state.imu_connected
+    assert controller.state.wheels["front-left"] == 1000
+    assert controller.state.wheels["front-right"] == -1000
+    assert controller.motion.mode is None
+
+
+def test_watchdog_brakes_without_disarming():
+    controller = mock_controller()
+    asyncio.run(controller.drive("test", 1, 0, 0, 1000))
+    controller._guard_check(controller.last_drive + 0.7)
+    assert controller.state.stopped
+    assert not any(controller.state.wheels.values())
+    assert controller.state.armed and controller.state.owner == "test"
+    asyncio.run(controller.drive("test", -1, 0, 0, 1000))
+    assert controller.state.wheels["front-left"] == 1000
+
+
+def test_key_release_and_stop_preserve_arm():
+    controller = mock_controller()
+    asyncio.run(controller.drive("test", 1, 0, 0, 1000))
+    asyncio.run(controller.drive("test", 0, 0, 0, 1000))
+    assert controller.state.stopped and controller.state.armed
+    asyncio.run(controller.stop("client-stop"))
+    assert controller.state.armed and controller.state.owner == "test"
+    asyncio.run(controller.stop("client-stop", True))
+    assert not controller.state.armed and controller.state.owner is None
+
+
+def test_disconnect_releases_session_and_brakes():
+    controller = mock_controller()
+    asyncio.run(controller.drive("test", 1, 0, 0, 1000))
+    asyncio.run(controller.disconnect("test"))
+    assert controller.state.stopped and not controller.state.armed
+    assert controller.state.owner is None
+
+
+def test_sidestep_is_disabled():
+    controller = mock_controller()
+    try:
+        asyncio.run(controller.sidestep("test", 1, 1000))
+    except PermissionError:
+        pass
+    else:
+        raise AssertionError("side-step must be disabled")
+    assert controller.state.stopped
 
 
 def test_rate_loop_converges_with_both_turn_directions():
@@ -144,48 +202,6 @@ def ready_controller():
     return c
 
 
-def test_running_loop_release_and_stale_imu_brake_without_resume():
-    async def scenario():
-        c = ready_controller()
-        writes = []
-        c._write = lambda wheels: writes.append(dict(wheels))
-        with patch("whats_that_smoke.web._stop_wheels") as brake:
-            task = asyncio.create_task(c._motion_loop())
-            try:
-                await c.drive("test", 0, 0, 1, 1400)
-                await asyncio.sleep(.06)
-                assert writes and any(writes[-1].values())
-                await c.drive("test", 0, 0, 0, 1400)
-                count = len(writes)
-                await asyncio.sleep(.06)
-                assert len(writes) == count and c.state.stopped
-                c.imu_sample_at = time.monotonic()
-                await c.drive("test", 0, 0, 1, 1400)
-                c.imu_sample_at -= 1
-                await asyncio.sleep(.04)
-                assert not c.state.armed and c.state.stopped
-                assert c.state.reason == "gyro-unavailable"
-                assert brake.call_count >= 2
-            finally:
-                task.cancel()
-                try: await task
-                except asyncio.CancelledError: pass
-    asyncio.run(scenario())
-
-
-def test_release_cancels_sidestep_and_brakes_immediately():
-    async def scenario():
-        c = ready_controller()
-        with patch("whats_that_smoke.web._stop_wheels") as brake:
-            await c.sidestep("test", 1, 1200)
-            c._apply_vector(0, .5, 1200)
-            await c.sidestep("test", 0, 1200)
-            assert c.motion.mode is None and c.state.stopped
-            assert not any(c.state.wheels.values())
-            brake.assert_called_once()
-    asyncio.run(scenario())
-
-
 def test_independent_watchdog_uses_browser_lease_even_when_motor_loop_fresh():
     c = ready_controller(); now = time.monotonic()
     c.motion.sidestep(1, 1200, now - .7, 0)
@@ -195,7 +211,7 @@ def test_independent_watchdog_uses_browser_lease_even_when_motor_loop_fresh():
     with patch("whats_that_smoke.web._stop_wheels") as brake:
         c._guard_check(now)
         brake.assert_called_once()
-    assert not c.state.armed and c.state.reason == "input-watchdog"
+    assert c.state.armed and c.state.reason == "input-watchdog"
     assert c.motion.mode is None
 
 

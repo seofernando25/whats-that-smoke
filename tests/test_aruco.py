@@ -120,3 +120,66 @@ def test_stale_camera_clears_overlay_and_stops_follow():
         assert controller.stop.call_count == int(follow)
     asyncio.run(scenario(False))
     asyncio.run(scenario(True))
+
+
+def test_curled_live_id0_decodes_without_retaining_a_track():
+    from pathlib import Path
+    crop = cv2.imread(str(Path(__file__).parent / 'fixtures' / 'curled-id0.png'), cv2.IMREAD_GRAYSCALE)
+    assert crop is not None
+    image = np.full((720, 1280), 220, np.uint8)
+    image[155:245, 295:575] = crop
+    for brightness in (-12, 0, 12):
+        frame = np.clip(image.astype(np.int16) + brightness, 0, 255).astype(np.uint8)
+        detections = ArucoFollower.detect_gray(frame)
+        assert [item.tag_id for item in detections] == [0]
+        assert not detections[0].tracked and detections[0].confidence == 1.0
+    image[155:245, 295:575] = 220
+    assert ArucoFollower.detect_gray(image) == []
+
+
+def bent_test_marker(marker):
+    x, y = np.meshgrid(np.arange(384), np.arange(384))
+    u = (x - 96) / 192
+    top = 96 + 24 * np.sin(2 * np.pi * u)
+    bottom = 288 + 28 * np.sin(np.pi * u)
+    return cv2.remap(marker, (u * 95).astype(np.float32),
+                     ((y - top) / (bottom - top) * 95).astype(np.float32),
+                     cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=255)
+
+
+def test_curved_border_all_dictionary_ids_and_rotations():
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    points = np.float32([[96, 96], [288, 96], [288, 288], [96, 288]])
+    for tag_id in range(50):
+        for rotation in range(4):
+            marker = np.rot90(cv2.aruco.generateImageMarker(dictionary, tag_id, 96), rotation).copy()
+            result = ArucoFollower.decode_curved(bent_test_marker(marker), points, dictionary)
+            assert result is not None and result[0] == tag_id and result[2] == 0
+
+
+def test_curved_border_rejects_blank_and_invalid_codes():
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    points = np.float32([[96, 96], [288, 96], [288, 288], [96, 288]])
+    for value in (0, 127, 255):
+        assert ArucoFollower.decode_curved(bent_test_marker(np.full((96, 96), value, np.uint8)), points, dictionary) is None
+    refs = np.array([[np.rot90(cv2.aruco.generateImageMarker(dictionary, tag, 96)
+                              .reshape(6, 16, 6, 16)[:, 4:12, :, 4:12].mean(axis=(1, 3))[1:5, 1:5] > 127, rotation)
+                      for rotation in range(4)] for tag in range(50)])
+    random = np.random.default_rng(34)
+    for _ in range(600):
+        bits = random.integers(0, 2, (4, 4), dtype=np.uint8)
+        if np.min(np.count_nonzero(bits != refs, axis=(2, 3))) < 2:
+            continue
+        cells = np.zeros((6, 6), np.uint8); cells[1:5, 1:5] = bits * 255
+        marker = np.repeat(np.repeat(cells, 16, axis=0), 16, axis=1)
+        assert ArucoFollower.decode_curved(bent_test_marker(marker), points, dictionary) is None
+
+
+def test_image_edge_gate_applies_to_native_and_fallback():
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    image = np.full((720, 1280), 255, np.uint8)
+    image[1:193, 400:592] = cv2.aruco.generateImageMarker(dictionary, 2, 192)
+    assert ArucoFollower.detect_gray(image) == []
+    image[:] = 255
+    image[20:212, 400:592] = cv2.aruco.generateImageMarker(dictionary, 2, 192)
+    assert [item.tag_id for item in ArucoFollower.detect_gray(image)] == [2]

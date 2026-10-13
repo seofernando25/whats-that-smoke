@@ -7,3 +7,10 @@ snapshots/
 *.jpeg
 *.png
 .DS_Store
+
+# Local runtime output and macOS transfer metadata
+._*
+work/
+tmp/
+.pytest_cache/
+!tests/fixtures/*.png

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import asyncio, json, math, subprocess, threading, time, uuid
+import asyncio, json, math, os, select, subprocess, threading, time, uuid
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -78,11 +78,21 @@ class CameraStream:
             try:
                 self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
                 buf = bytearray()
+                last_frame_at = time.monotonic()
+                received_frame = False
                 while not self.stop.is_set():
-                    # BufferedReader.read(n) may wait to fill n bytes; that
-                    # batches several small MJPEG frames and adds latency.
-                    chunk = self.process.stdout.read1(16384)
-                    if not chunk: break
+                    # A live rpicam process can stall indefinitely without EOF.
+                    # Bound pipe waits and recover capture independently of the
+                    # controller. Stale-frame checks still clear old overlays.
+                    frame_timeout = 2.0 if received_frame else 5.0
+                    if time.monotonic() - last_frame_at > frame_timeout:
+                        break
+                    ready, _, _ = select.select([self.process.stdout], [], [], .25)
+                    if not ready:
+                        continue
+                    chunk = os.read(self.process.stdout.fileno(), 65536)
+                    if not chunk:
+                        break
                     buf.extend(chunk)
                     while True:
                         a = buf.find(b"\xff\xd8"); b = buf.find(b"\xff\xd9", a + 2) if a >= 0 else -1
@@ -90,13 +100,20 @@ class CameraStream:
                             if len(buf) > 2_000_000: del buf[:-2]
                             break
                         frame = bytes(buf[a:b + 2]); del buf[:b + 2]
+                        last_frame_at = time.monotonic()
+                        received_frame = True
                         with self.cv:
                             self.received_at = time.monotonic(); self.frame_times.append(self.received_at)
                             self.frame = frame; self.seq += 1; self.cv.notify_all()
             except Exception: pass
             finally:
                 if self.process:
-                    self.process.kill(); self.process.wait(); self.process = None
+                    self.process.terminate()
+                    try:
+                        self.process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        self.process.kill(); self.process.wait()
+                    self.process = None
             self.stop.wait(1)
 
     def frames(self) -> Iterator[bytes]:
@@ -197,7 +214,7 @@ class RobotController:
                 reason = "gyro-unavailable"
             elif not self.state.stopped and now - self.last_drive > WATCHDOG_SECONDS:
                 reason = "watchdog"
-            if reason: self._brake_locked(reason, True)
+            if reason: self._brake_locked(reason)
 
     def _guard(self):
         while not self.guard_stop.wait(.05):
@@ -282,22 +299,7 @@ class RobotController:
             self.state.stopped = not any(wheels.values()); self.state.reason = "command-zero" if self.state.stopped else reason; self.state.revision += 1
 
     async def sidestep(self, cid: str, direction: int, limit: int) -> None:
-        async with self.lock:
-            if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
-            if aruco.follow: raise PermissionError("disable ArUco follow before side-step")
-            direction = max(-1, min(1, int(direction))); limit = max(500, min(1800, int(limit)))
-            with self.hw_lock:
-                now = time.monotonic()
-                if not direction:
-                    self._brake_locked("key-release")
-                elif not self._imu_ready(now):
-                    self._brake_locked("gyro-unavailable", True)
-                    raise PermissionError("gyro must be connected and calibrated")
-                else:
-                    self.last_operator_command = now
-                    self.motion.sidestep(direction, limit, now, self.state.heading_deg)
-                    self.state.strafe = float(direction)
-        await self.broadcast()
+        raise PermissionError("side-step disabled; use direct turning")
 
     async def drive(self, cid, forward, strafe, turn, limit, autonomous=False):
         async with self.lock:
@@ -316,12 +318,12 @@ class RobotController:
                     self._apply_vector(forward, turn, limit)
                 elif not forward and not turn:
                     self._brake_locked("key-release")
-                elif turn and not self._imu_ready(now):
-                    self._brake_locked("gyro-unavailable", True)
-                    raise PermissionError("gyro must be connected and calibrated")
                 else:
+                    self.motion.cancel()
                     self.last_operator_command = now
-                    self.motion.drive(forward, turn, limit, now)
+                    self.state.motion_mode = "manual"
+                    self.state.turn_target_dps = 0
+                    self._apply_vector(forward, turn, limit)
         await self.broadcast()
 
     async def stop(self, reason, release=False):
@@ -381,7 +383,7 @@ async def websocket_endpoint(ws: WebSocket):
                 elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"))
                 elif kind == "heading-calibrate": controller.heading.request_calibration()
                 elif kind == "heartbeat": await ws.send_json(controller.payload(cid))
-                elif kind == "stop" and controller.state.owner in (None,cid): await controller.stop("client-stop", True)
+                elif kind == "stop" and controller.state.owner in (None,cid): await controller.stop("client-stop", m.get("reason") == "disarm")
                 else: await ws.send_json({"type":"error","error":"unknown message"})
             except PermissionError as e: await ws.send_json({"type":"error","error":str(e)})
             except (TypeError, ValueError, json.JSONDecodeError): await ws.send_json({"type":"error","error":"invalid message"})

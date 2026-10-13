@@ -6,11 +6,11 @@ const functions = source.slice(source.indexOf('function vector()'), source.index
 for (const [pressed, type, forward, turn] of [
   [['KeyW','KeyA'], 'drive', 1, 1],
   [['KeyW','KeyD'], 'drive', 1, -1],
-  [['KeyS','KeyA'], 'drive', -1, -1],
-  [['KeyS','KeyD'], 'drive', -1, 1],
+  [['KeyS','KeyA'], 'drive', -1, 1],
+  [['KeyS','KeyD'], 'drive', -1, -1],
   [['KeyQ'], 'drive', 0, 1],
   [['KeyE'], 'drive', 0, -1],
-  [['KeyA'], 'sidestep', undefined, undefined],
+  [['KeyA'], 'drive', 0, 1],
   [[], 'drive', 0, 0],
 ]) {
   const messages = [];

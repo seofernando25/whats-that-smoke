@@ -48,7 +48,7 @@ function vector() {
   return {
     forward,
     strafe: 0,
-    turn: pivot || forward * steering,
+    turn: pivot || steering,
   };
 }
 
@@ -60,12 +60,7 @@ function drive() {
   const next = vector();
   document.querySelectorAll("[data-key]").forEach((button) => button.classList.toggle("active", keys.has(button.dataset.key)));
   if (!state.armed || !state.you_are_owner) return;
-  const direction = Number(keys.has("KeyA")) - Number(keys.has("KeyD"));
-  if (direction && !next.forward && !next.turn) {
-    send({ type: "sidestep", direction, speed_limit: Number(speed.value) });
-  } else {
-    send({ type: "drive", ...next, speed_limit: Number(speed.value) });
-  }
+  send({ type: "drive", ...next, speed_limit: Number(speed.value) });
 }
 
 function stop(reason = "client-stop") {

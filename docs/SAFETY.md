@@ -19,6 +19,8 @@ motion command => finite duration + explicit stop/finally
 exception|disconnect|SIGINT => all motor PWM=0
 service-stop => freeze controller > independent PCA9685 brake > terminate
 aruco-lost|frame-stale>450ms|owner-disconnect => brake
+manual-input-timeout|keyup|blur|hidden|STOP => brake; connected owner remains armed until explicit DISARM
+owner-disconnect|shutdown => brake + release ownership
 unknown address/register => no write
 servo bounds unknown => no pulse
 camera capture => no actuation

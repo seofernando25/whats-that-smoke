@@ -122,3 +122,26 @@ next := user inspect/report right-trial motion before further automated runs; no
 tool := tools/tune_arc.py; max .8s; no autonomous retries; fresh camera+IMU required
 camera := stale before testing; service restart restored≈30fps; no camera recovery code change
 ```
+
+## 2026-10-13 dashboard service verification
+
+- Existing systemd dashboard unit matches the repository service; active and enabled at boot.
+- Restarted service to recover a stale camera feed; observed camera at 29.8 fps with 7 ms frame age after restart.
+- LAN UI HTTP 200 at http://192.168.8.170:8765; WebSocket state handshake verified; USB IMU streaming at 100 Hz.
+- Robot remained disarmed, follow disabled, and wheel commands zero; no motion tests performed.
+
+## 2026-10-13 simple manual controls
+
+- Manual drive now uses direct differential wheel commands; gyro control, ramps, breakaway and side-step disabled for manual driving.
+- W/S forward/reverse; A/D and Q/E direct left/right turning. Input watchdog and STOP brake without disarming the connected owner; explicit DISARM, disconnect and shutdown still release ownership.
+- Seven mocked controller regression checks passed, including no-gyro turning, watchdog braking/resume, stop vs disarm, disconnect and disabled side-step. No physical movement tests.
+- Service restarted; UI/static assets/WebSocket verified and camera fresh after deployment.
+- Rollback files: /home/advanced/wts-simple-controls-backup-JwLzjy/{web.py,app.js,DASHBOARD.md,SAFETY.md,test_drive.py}.
+
+## 2026-10-13 curled ArUco detection completed
+
+- Added bounded correction of curled paper borders and exact, unambiguous cell-pixel decoding. Original live ID0: baseline 0/50 visible polls; correction 27/27 unobstructed captured frames and 268/268 stationary live target polls over 30 seconds.
+- Ten detector regression functions passed, covering the cropped real tag, brightness shifts, 200 bent ID/rotation cases, 569 invalid codes, blank and image-edge rejection, tracker expiry, and stale-frame braking.
+- Added camera capture timeout/recovery with 5s startup grace, 2s frame timeout, graceful termination and bounded kill fallback. Three camera regression functions and seven simple-control checks passed; capture currently fresh at 30fps.
+- Stationary validation was follow-off and stopped. The user subsequently operated follow with multiple tags and accepted the detection goal as complete; no additional agent movement or camera fault injection was performed.
+- Source matches tested candidates; dashboard service remains active. Rollback: /home/advanced/wts-curved-tag-backup-WzCwZj/{aruco.py,web.py,test_aruco.py,ARUCO.md,STATE.md}; new tests/fixtures/curled-id0.png and tests/test_camera.py.

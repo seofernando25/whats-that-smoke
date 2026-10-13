@@ -200,7 +200,7 @@ class ArucoFollower:
         # Keep the normal threshold sweep: it finds the live small tags in a
         # few milliseconds. Very permissive sweeps cost hundreds of ms/frame.
         parameters.minCornerDistanceRate = 0.01
-        parameters.minDistanceToBorder = 1
+        parameters.minDistanceToBorder = 3
         parameters.errorCorrectionRate = 0.8
         # Verified on the steeply foreshortened live ID 2: 4 px/cell rejects
         # its bits; 8 px/cell decodes it at essentially the same total cost.
@@ -219,6 +219,7 @@ class ArucoFollower:
 
     @staticmethod
     def detect_gray(image: Any) -> list[Detection]:
+        import numpy as np
         dictionary, parameters, detector = ArucoFollower.detector()
         corners, ids, rejected = detector.detectMarkers(image)
         candidates: list[Detection] = []
@@ -229,6 +230,11 @@ class ArucoFollower:
                 if tag_id not in ALLOWED_IDS:
                     continue
                 points = raw_corners.reshape(4, 2)
+                height, width = image.shape[:2]
+                margin = parameters.minDistanceToBorder
+                if (points[:, 0].min() < margin or points[:, 1].min() < margin
+                        or points[:, 0].max() >= width - margin or points[:, 1].max() >= height - margin):
+                    continue
                 detection = ArucoFollower.from_points(tag_id, points)
                 if detection:
                     candidates.append(detection)
@@ -238,6 +244,13 @@ class ArucoFollower:
         # glare, or steep perspective. Re-sample only those quads after a
         # perspective warp; strict black-border + dictionary-distance checks
         # keep this cheap fallback from turning arbitrary rectangles into IDs.
+        height, width = image.shape[:2]
+        # Do not let fallback decoding bypass the detector's quiet-zone gate.
+        rejected = [quad for quad in rejected
+                    if np.all(quad[..., 0] >= parameters.minDistanceToBorder)
+                    and np.all(quad[..., 1] >= parameters.minDistanceToBorder)
+                    and np.all(quad[..., 0] < width - parameters.minDistanceToBorder)
+                    and np.all(quad[..., 1] < height - parameters.minDistanceToBorder)]
         for tag_id, points, distance in ArucoFollower.decode_rejected(
             image, rejected, dictionary, parameters.errorCorrectionRate
         ):
@@ -320,6 +333,9 @@ class ArucoFollower:
                     if match is not None:
                         points = refined
             if match is None:
+                curved = ArucoFollower.decode_curved(image, points, dictionary)
+                if curved is not None:
+                    decoded.append(curved)
                 continue
             best, rotation, distance = match
             tag_id = int(tag_ids[best])
@@ -327,6 +343,95 @@ class ArucoFollower:
             canonical_points = np.roll(points, rotation, axis=0)
             decoded.append((tag_id, canonical_points, distance))
         return decoded
+
+    @staticmethod
+    def decode_curved(image, points, dictionary):
+        """Rectify a bent paper border, then require repeated exact ID reads.
+
+        This does not relax dictionary distance. The border supplies curvature;
+        a small bounded grid of surface coordinates compensates foreshortening.
+        Conflicting IDs/rotations reject the candidate rather than pick a goal.
+        """
+        import cv2
+        import numpy as np
+
+        if min(math.dist(points[i], points[(i + 1) % 4]) for i in range(4)) < 24:
+            return None
+        edges = [math.dist(points[i], points[(i + 1) % 4]) for i in range(4)]
+        # Rectify along the longer projected edges; x+y is not a reliable
+        # top-left ordering for a very oblique marker.
+        if edges[1] + edges[3] > edges[0] + edges[2]:
+            points = np.roll(points, 1, axis=0)
+        destination = np.float32([[96, 96], [288, 96], [288, 288], [96, 288]])
+        warp = cv2.warpPerspective(image, cv2.getPerspectiveTransform(points, destination), (384, 384))
+        threshold, _ = cv2.threshold(warp[96:289, 96:289], 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        if not 30 < threshold < 225:
+            return None
+        count, labels, stats, _ = cv2.connectedComponentsWithStats((warp < threshold).astype(np.uint8))
+        # The black border is a connected component surrounded by a quiet zone.
+        candidates = [i for i in range(1, count)
+                      if 7000 < stats[i, cv2.CC_STAT_AREA] < 75000
+                      and np.count_nonzero(labels[96:289, 96:289] == i) > 6000]
+        if len(candidates) != 1:
+            return None
+        component = labels == candidates[0]
+        ys, xs = np.where(component)
+        if xs.min() < 8 or xs.max() > 375 or ys.min() < 8 or ys.max() > 375:
+            return None
+        columns = np.arange(97, 288)
+        tops, bottoms = [], []
+        for x in columns:
+            rows = np.flatnonzero(component[:, x])
+            if not len(rows):
+                return None
+            tops.append(rows[0]); bottoms.append(rows[-1])
+        tops = cv2.GaussianBlur(np.float32(tops)[None], (9, 1), 2)[0]
+        bottoms = cv2.GaussianBlur(np.float32(bottoms)[None], (9, 1), 2)[0]
+        if np.min(bottoms - tops) < 100 or np.max(bottoms - tops) > 320:
+            return None
+        # Apply only when the measured border actually bends appreciably.
+        if max(np.ptp(tops), np.ptp(bottoms)) < 12:
+            return None
+        values = component[96:289, 96:289]
+        black = warp[96:289, 96:289][values]
+        white = warp[96:289, 96:289][~values]
+        if not len(white) or np.percentile(white, 80) - np.median(black) < 60:
+            return None
+        if _ARUCO_CODEBOOK is None:
+            ArucoFollower.decode_rejected(image, [], dictionary, .8)
+        tag_ids, references = _ARUCO_CODEBOOK
+        codes = references.astype(bool)
+        # Four samples per cell side, strictly within the central quarter.
+        coords = (np.arange(6)[:, None] * 16 + np.arange(6, 10)[None]).reshape(-1) / 95
+        u, v = np.meshgrid(coords, coords)
+        offsets_x, offsets_y = np.meshgrid(np.arange(-.08, .081, .02), np.arange(-.08, .081, .02))
+        ox = offsets_x.reshape(-1, 1, 1); oy = offsets_y.reshape(-1, 1, 1)
+        sx = 97 + 190 * (u[None] + ox * 4 * u[None] * (1 - u[None]))
+        top = np.interp(sx, columns, tops); bottom = np.interp(sx, columns, bottoms)
+        sy = top + (bottom - top) * (v[None] + oy * 4 * v[None] * (1 - v[None]))
+        count = len(ox)
+        sampled = cv2.remap(warp, sx.astype(np.float32).reshape(-1, 24),
+                            sy.astype(np.float32).reshape(-1, 24), cv2.INTER_LINEAR)
+        cells = sampled.reshape(count, 6, 4, 6, 4).transpose(0, 1, 3, 2, 4).reshape(count, 6, 6, 16)
+        means = cells.mean(axis=3)
+        # Require separation in the actual cell pixels, not just cell averages.
+        lows = np.percentile(cells[:, 1:5, 1:5], 20, axis=3)
+        highs = np.percentile(cells[:, 1:5, 1:5], 80, axis=3)
+        border = np.concatenate((means[:, 0], means[:, -1], means[:, 1:-1, 0], means[:, 1:-1, -1]), axis=1)
+        lo = np.max(np.where(codes[None], -np.inf, highs[:, None, None]), axis=(3, 4))
+        hi = np.min(np.where(codes[None], lows[:, None, None], np.inf), axis=(3, 4))
+        readable = hi - lo >= np.maximum(15., .12 * np.ptp(means, axis=(1, 2)))[:, None, None]
+        border_ok = np.count_nonzero(border[:, None, None] < ((lo + hi) / 2)[..., None], axis=3) >= 19
+        support_counts = np.count_nonzero(readable & border_ok, axis=0)
+        matches = {(int(index), int(rotation)): int(support_counts[index, rotation])
+                   for index, rotation in np.argwhere(support_counts)}
+        if len(matches) != 1:
+            return None
+        (index, rotation), support = next(iter(matches.items()))
+        if support < 3:
+            return None
+        return int(tag_ids[index]), np.roll(points, rotation, axis=0), 0
+
 
     @staticmethod
     def decode_cells(means, threshold, references, max_errors):
