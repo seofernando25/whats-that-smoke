@@ -72,5 +72,14 @@
     0
   ],
   "localization_error_confirmed": false,
-  "position_error_bound_m": null
+  "position_error_bound_m": null,
+  "empirical_fit": {
+    "operator_confirmed_car_was_between_legs": true,
+    "operator_confirmed_fits": true,
+    "approx_vehicle_width_m": 0.1524,
+    "approx_vehicle_length_m": 0.2032,
+    "exact_dimensions": false,
+    "reference": "operator-supplied final parked-view screenshot",
+    "scope": "demonstrated passage and height clearance; does not certify metric tag/camera calibration or exact centring"
+  }
 }

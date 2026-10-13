@@ -165,3 +165,10 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 
 - Second outside viewpoint: clockwise≈70°, six80ms tangent-biased forward pulses, then visual/IMU rotation back toward drone. Observed short scene bridge:12 unique fresh poses, up to104 PnP inliers; bridge subsequently expired. A fixed-jump recovery defect was corrected and the recorded survey replay relocalized automatically with three consistent tags. Camera proxy≈x0.419m,z1.495m from initial tag9 frame; nominal uncertainty≈0.237m, not parking precision.
 - Final automated validation:62 Python tests;8 keyboard mappings and follow slider/ownership contracts; recorded survey replay excluding incidentalID17. Calibration remains unverified and no exact parking claim is made.
+
+## Parking goal continuation: demonstrated fit and ground observer
+
+- Operator confirmed the actual car was between the legs in the final reference image and fits; approximate dimensions6×8in are retained as empirical estimates, not certified envelope values.
+- Stationary camera1400/1500/1600µs sweep showed≈0.19px static-scene motion; camera view effectively unchanged. Restored original servo values and disarmed after the sweep.
+- Added independent skid-ground pose/tracking observer and two meaningful geometry/tracker tests. Initial seed≈35° oblique approach; systematic geometry error remains unverified.
+- Pi SSH and dashboard subsequently became unreachable while the router remained in the local ARP table. The next short motor probe was not deployed or executed; last agent-controlled state was stopped/disarmed. Goal remains physical parking, not prototype completion.
