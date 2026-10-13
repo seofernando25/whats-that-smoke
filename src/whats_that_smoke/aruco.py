@@ -32,6 +32,9 @@ class Detection:
     source: str = "decode"
     age_s: float = 0.0
     confidence: float = 1.0
+    rotation_vector: list[float] | None = None
+    translation_vector: list[float] | None = None
+    reprojection_error_px: float | None = None
 
 
 @dataclass
@@ -167,6 +170,8 @@ class ArucoFollower:
                 raise PermissionError("arm controls before enabling ArUco follow")
             self.follow_speed_limit = max(500, min(1800, int(speed_limit)))
         if follow:
+            if getattr(self.controller,"parking_active",False):
+                raise PermissionError("stop parking before enabling follow")
             if self.controller.state.owner != client_id or not self.controller.state.armed:
                 raise PermissionError("arm controls before enabling ArUco follow")
             await self.controller.stop("aruco-follow-start", release=False)
@@ -249,10 +254,14 @@ class ArucoFollower:
         camera_matrix = np.array([[FOCAL_PX, 0, FRAME_WIDTH / 2], [0, FOCAL_PX, FRAME_HEIGHT / 2], [0, 0, 1]], dtype=np.float64)
         half = TAG_SIZE_M / 2
         object_points = np.array([[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]], dtype=np.float32)
-        solved, _, translation = cv2.solvePnP(
+        solved, rotation, translation = cv2.solvePnP(
             object_points, points.astype(np.float32), camera_matrix, np.zeros(5), flags=cv2.SOLVEPNP_IPPE_SQUARE
         )
         distance_m = float(np.linalg.norm(translation)) if solved and translation[2, 0] > 0 else TAG_SIZE_M * FOCAL_PX / size_px
+        reprojection = None
+        if solved and translation[2, 0] > 0:
+            projected, _ = cv2.projectPoints(object_points, rotation, translation, camera_matrix, np.zeros(5))
+            reprojection = float(np.sqrt(np.mean(np.sum((projected.reshape(4, 2)-points)**2, axis=1))))
         return Detection(
             tag_id=tag_id,
             corners=[[float(x), float(y)] for x, y in points],
@@ -264,6 +273,9 @@ class ArucoFollower:
             source=source,
             age_s=age_s,
             confidence=confidence,
+            rotation_vector=rotation.reshape(3).tolist() if solved else None,
+            translation_vector=translation.reshape(3).tolist() if solved else None,
+            reprojection_error_px=reprojection,
         )
 
     @staticmethod
@@ -764,6 +776,9 @@ class ArucoFollower:
                     await self.controller.stop("aruco-result-stale", release=False)
                 await self.controller.broadcast()
                 continue
+            parking = getattr(self.controller, "parking", None)
+            if parking is not None:
+                await asyncio.to_thread(parking.update, detections, self.controller.state, captured_at, completed, self.previous_gray)
             if not detections:
                 # A tiny/distant marker may miss an individual compressed
                 # frame. Preserve the previous overlay/command briefly rather
@@ -799,6 +814,9 @@ class ArucoFollower:
                  "source": item.source, "age_ms": round(item.age_s * 1000), "confidence": round(item.confidence, 2)}
                 for item in detections
             ]
+            for marker, item in zip(state.aruco_markers, detections):
+                marker.update(rotation_vector=item.rotation_vector, translation_vector=item.translation_vector,
+                              reprojection_error_px=item.reprojection_error_px)
             state.aruco_status = (
                 "target-reached" if filtered_distance <= TARGET_DISTANCE_M else
                 "tracking" if detection.source == "decode" else f"tracking-{detection.source}"

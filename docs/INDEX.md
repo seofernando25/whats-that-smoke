@@ -31,3 +31,5 @@ L3 PROTOCOL.md
 `never-store := passwords|tokens|private-keys|router-secrets`
 
 `ARUCO.md := 50mm IDs0..4 + pose/follow equations + autonomous failsafes`
+
+`PARKING.md := provisional tag/IMU/scene map + swept-footprint planner + calibrated entry gates`

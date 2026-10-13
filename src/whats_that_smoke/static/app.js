@@ -110,6 +110,7 @@ function render(next) {
   $("#heading-widget").classList.toggle("uncalibrated", !next.heading_calibrated);
   $("#heading-widget").classList.toggle("moving", !next.heading_stationary && next.heading_calibrated);
   drawAruco(next);
+  window.renderParking?.(next.parking, next);
   Object.entries(next.wheels).forEach(([name, duty]) => document.querySelector(`[data-wheel="${name}"]`).textContent = duty);
 }
 

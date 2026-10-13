@@ -154,3 +154,14 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Verified with controller mocks, a simulated80% motor dead zone at three response rates in both directions, pulse expiry without camera processing, and UI speed/ownership contracts. Physical centering has not been tested by the agent.
 - Validation: 49 Python tests and keyboard/follow-slider contract checks passed. Pi checks confirmed close-tag full-strength pivots and independent pulse braking with mocked hardware; UI/API served correctly and capture was fresh at30.1fps. Service restarted with follow off and robot disarmed.
 - Rollback: /home/advanced/wts-follow-center-backup-obbyd7zl/{aruco.py,web.py,app.js,ARUCO.md,DASHBOARD.md,SAFETY.md,STATE.md,.gitignore}.
+
+## 2026-10-13 drone-parking prototype and outside-gear survey
+
+- User confirmed powered-off drone, clear floor, human beside the car, and explicitly authorized autonomous controlled exploration and recovery.
+- Drone tags9/12/13/14 form the allowed rigid landmark set; live survey mapped9 and12 together. Car position is currently a camera proxy in a provisional first-tag frame.
+- Added map panel, raw marker poses, short static-scene visual bridge, swept full-footprint planner and bounded parking feedback. Exact entry requires verified envelope/gear/camera transforms and empirically validated error bounds; current values remain unverified, so entry is disabled.
+- Physical120ms pivots measured approximately11° left and15° right. Seven100ms forward steps reached approximately1.11m nominal tag range; nine reverse steps returned beyond1.5m. Every motion was bounded and braked. Initial/median translation response differed substantially; no precise odometry claim.
+- Camera≈30fps and USB IMU≈100Hz remained live. Final state after each survey was stopped and disarmed. See PARKING.md for actual limits and calibration conventions. No parking between the legs has been demonstrated.
+
+- Second outside viewpoint: clockwise≈70°, six80ms tangent-biased forward pulses, then visual/IMU rotation back toward drone. Observed short scene bridge:12 unique fresh poses, up to104 PnP inliers; bridge subsequently expired. A fixed-jump recovery defect was corrected and the recorded survey replay relocalized automatically with three consistent tags. Camera proxy≈x0.419m,z1.495m from initial tag9 frame; nominal uncertainty≈0.237m, not parking precision.
+- Final automated validation:62 Python tests;8 keyboard mappings and follow slider/ownership contracts; recorded survey replay excluding incidentalID17. Calibration remains unverified and no exact parking claim is made.

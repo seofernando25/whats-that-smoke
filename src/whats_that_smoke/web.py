@@ -15,6 +15,7 @@ from .aruco import ArucoFollower
 from .heading import RelativeHeading
 from .imu import ImuStream
 from .motion import GyroMotion, MotionFault, ramp_wheels
+from .parking import ParkingEstimator, Pose2, DockingFeedback, gear_obstacles
 
 STATIC = Path(__file__).parent / "static"
 WATCHDOG_SECONDS = .60
@@ -163,6 +164,12 @@ class RobotController:
         self.drive_deadline: float | None = None
         self.imu_sample_at: float | None = None
         self.heading = RelativeHeading()
+        self.parking = ParkingEstimator()
+        self.parking_active = False
+        self.parking_owner = None
+        self.parking_task = None
+        self.parking_status = "observing"
+        self.parking_epoch = 0
 
     def imu_sample(self, acceleration: list[float], gyroscope: list[float], rate_hz: float) -> None:
         self.state.imu_accel_g = dict(zip("xyz", acceleration))
@@ -210,7 +217,10 @@ class RobotController:
         with self.hw_lock:
             if not self.state.armed: return
             reason = None
-            if self.drive_deadline is not None and now >= self.drive_deadline:
+            if self.parking_active and (not self._imu_ready(now) or now-self.parking.last_localized>.30):
+                self.parking_active = False
+                reason = "parking-sensors-stale"
+            elif self.drive_deadline is not None and now >= self.drive_deadline:
                 reason = "aruco-pivot-complete"
             elif self.motion.mode and now - self.last_operator_command > WATCHDOG_SECONDS:
                 reason = "input-watchdog"
@@ -249,6 +259,7 @@ class RobotController:
                 await self.broadcast()
 
     async def close(self):
+        await self.cancel_parking("shutdown")
         if self.motion_task:
             self.motion_task.cancel()
             try: await self.motion_task
@@ -266,6 +277,7 @@ class RobotController:
 
     async def camera_move(self, cid, axis, delta):
         async with self.lock:
+            if self.parking_active: raise PermissionError("stop parking before moving camera")
             if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
             if axis not in SERVO_CHANNELS: raise ValueError
             delta = max(-50, min(50, int(delta)))
@@ -305,9 +317,109 @@ class RobotController:
     async def sidestep(self, cid: str, direction: int, limit: int) -> None:
         raise PermissionError("side-step disabled; use direct turning")
 
+    async def survey_step(self, cid, forward, turn, limit, duration):
+        if self.parking_active:
+            raise PermissionError("stop parking before surveying")
+        if aruco.follow:
+            raise PermissionError("disable follow before surveying")
+        if not self._imu_ready(time.monotonic()):
+            raise PermissionError("fresh calibrated IMU required for survey")
+        frame_age = camera.metrics()["camera_frame_age_ms"]
+        if frame_age is None or frame_age > 250:
+            raise PermissionError("fresh camera required for survey")
+        if not all(math.isfinite(v) for v in (forward, turn, duration)):
+            raise ValueError("invalid survey step")
+        if abs(forward) + abs(turn) > 1 or not .01 <= duration <= .20:
+            raise ValueError("survey steps must be a single axis and <=200ms")
+        await self.drive(cid, forward, 0, turn, max(500, min(1800, limit)),
+                         autonomous=True, duration=duration)
+        self.state.motion_mode = "survey"
+        self.state.reason = "survey-step"
+        await self.broadcast()
+
+    async def cancel_parking(self, reason="parking-stopped"):
+        self.parking_active = False
+        self.parking_epoch += 1
+        task = self.parking_task
+        if task and task is not asyncio.current_task():
+            task.cancel()
+            try: await task
+            except asyncio.CancelledError: pass
+        self.parking_task = None
+        self.parking_owner = None
+        self.parking_status = reason
+        await self.stop(reason, release=False)
+
+    async def start_parking(self, cid):
+        if not self._imu_ready(time.monotonic()): raise PermissionError("fresh calibrated IMU required")
+        if self.state.owner != cid or not self.state.armed:
+            raise PermissionError("arm controls before parking")
+        blockers = self.parking.snapshot()["blockers"]
+        if blockers: raise PermissionError("parking unavailable: " + "; ".join(blockers))
+        await self.cancel_parking("parking-planning")
+        epoch = self.parking_epoch
+        await aruco.disable_follow("parking-start")
+        plan = await asyncio.to_thread(self.parking.plan_snapshot)
+        if not plan["ok"]: raise PermissionError("; ".join(plan["blockers"]))
+        if self.state.owner != cid or not self.state.armed or epoch != self.parking_epoch:
+            raise PermissionError("parking request cancelled or ownership changed")
+        if not self._imu_ready(time.monotonic()) or self.parking.snapshot()["blockers"]:
+            raise PermissionError("parking localization changed while planning")
+        self.parking_owner = cid
+        self.parking_active = True
+        self.parking_status = "following verified route"
+        route = [Pose2(**pose) for pose in plan["path"]]
+        config = self.parking.config
+        feedback = DockingFeedback(route, config["motion_model"], config["vehicle"],
+                                   gear_obstacles(config["gear"], config["vehicle"]["height_m"]),
+                                   config["clearance_margin_m"] + self.parking.sigma)
+        self.parking_task = asyncio.create_task(self._parking_loop(cid, feedback), name="drone-parking")
+
+    async def _parking_loop(self, cid, feedback):
+        measured_at = -1
+        try:
+            while self.parking_active:
+                if not self._imu_ready(time.monotonic()):
+                    self.parking_status = "parking-imu-stale"; break
+                if self.state.owner != cid or not self.state.armed:
+                    self.parking_status = "parking ownership lost"; break
+                snapshot = self.parking.snapshot()
+                if snapshot["blockers"]:
+                    self.parking_status = "; ".join(snapshot["blockers"]); break
+                if self.parking.last_localized == measured_at:
+                    await asyncio.sleep(.02); continue
+                measured_at = self.parking.last_localized
+                pose = snapshot["car_pose"]
+                command = feedback.step(Pose2(pose["x_m"], pose["z_m"], math.radians(pose["yaw_deg"])))
+                self.parking_status = command.get("reason", command["action"])
+                if command["action"] == "stop":
+                    await self.stop(self.parking_status, release=False)
+                    if self.parking_status != "settling": break
+                    await asyncio.sleep(.06); continue
+                duration = command["duration"]
+                await self.drive(cid, command["forward"], 0, command["turn"], 1800,
+                                 autonomous=True, duration=duration)
+                self.state.motion_mode = "parking"
+                pulse_end = time.monotonic() + duration
+                await asyncio.sleep(duration + .02)
+                await self.stop("parking-observe", release=False)
+                await asyncio.sleep(.12)
+                deadline = time.monotonic() + .5
+                while self.parking_active and self.parking.last_localized < pulse_end:
+                    if time.monotonic() > deadline:
+                        self.parking_status = "post-motion localization unavailable"; break
+                    await asyncio.sleep(.02)
+                if self.parking.last_localized < pulse_end: break
+        finally:
+            self.parking_active = False
+            self.parking_owner = None
+            await self.stop("parking-stopped", release=False)
+            await self.broadcast()
+
     async def drive(self, cid, forward, strafe, turn, limit, autonomous=False, duration=None):
         async with self.lock:
             if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
+            if self.parking_active and not autonomous: raise PermissionError("stop parking before manual driving")
             if aruco.follow and not autonomous: raise PermissionError("disable ArUco follow before manual drive")
             if not all(math.isfinite(value) for value in (forward, strafe, turn)): raise ValueError
             forward = max(-1., min(1., forward)); strafe = max(-1., min(1., strafe)); turn = max(-1., min(1., turn)); limit = max(500, min(1800, limit))
@@ -343,6 +455,7 @@ class RobotController:
         await self.broadcast()
 
     async def disconnect(self, cid):
+        if self.parking_owner == cid: await self.cancel_parking("parking-owner-disconnected")
         self.clients.pop(cid, None)
         if self.state.owner == cid: await self.stop("controller-disconnected", True)
         else: await self.broadcast()
@@ -351,6 +464,8 @@ class RobotController:
         self.state.imu_age_ms = round((time.monotonic() - self.imu_sample_at) * 1000) if self.imu_sample_at else None
         p = asdict(self.state); p.update(clients=len(self.clients), you_are_owner=bool(cid and self.state.owner == cid), watchdog_ms=600)
         p.update(camera.metrics()); p.update(aruco.metrics())
+        p["parking"] = self.parking.snapshot()
+        p["parking"].update(active=self.parking_active, execution_status=self.parking_status)
         p["motion_input_age_ms"] = round((time.monotonic() - self.last_operator_command) * 1000) if self.motion.mode else None
         return {"type": "state", "state": p}
 
@@ -378,6 +493,12 @@ def stream():
 @app.get("/api/state")
 async def state(): return controller.payload()
 
+@app.get("/api/parking")
+async def parking_state(): return controller.parking.snapshot()
+
+@app.get("/api/parking/plan")
+async def parking_plan(): return await asyncio.to_thread(controller.parking.plan_snapshot)
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept(); cid = uuid.uuid4().hex[:8]; controller.clients[cid] = ws
@@ -388,12 +509,18 @@ async def websocket_endpoint(ws: WebSocket):
                 m = json.loads(await ws.receive_text()); kind = m.get("type")
                 if kind == "drive": await controller.drive(cid, float(m.get("forward",0)), float(m.get("strafe",0)), float(m.get("turn",0)), int(m.get("speed_limit",1800)))
                 elif kind == "sidestep": await controller.sidestep(cid, int(m.get("direction",0)), int(m.get("speed_limit",1200)))
+                elif kind == "survey-step": await controller.survey_step(cid, float(m.get("forward",0)), float(m.get("turn",0)), int(m.get("speed_limit",1800)), float(m.get("duration",.1)))
                 elif kind == "arm": await controller.arm(cid)
                 elif kind == "camera": await controller.camera_move(cid, str(m.get("axis")), int(m.get("delta", 0)))
                 elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"), m.get("speed_limit"))
+                elif kind == "parking":
+                    if m.get("action") == "start": await controller.start_parking(cid)
+                    elif m.get("action") == "stop" and controller.state.owner == cid: await controller.cancel_parking()
+                    else: raise ValueError("invalid parking request")
                 elif kind == "heading-calibrate": controller.heading.request_calibration()
                 elif kind == "heartbeat": await ws.send_json(controller.payload(cid))
                 elif kind == "stop" and controller.state.owner in (None,cid):
+                    await controller.cancel_parking("client-stop")
                     await aruco.disable_follow("client-stop")
                     await controller.stop("client-stop", m.get("reason") == "disarm")
                 else: await ws.send_json({"type":"error","error":"unknown message"})

@@ -1,0 +1,76 @@
+{
+  "drone_tag_ids": [
+    9,
+    12,
+    13,
+    14
+  ],
+  "tag_size_m": 0.05,
+  "tag_size_confirmed": false,
+  "camera_intrinsics_confirmed": false,
+  "camera_mount_confirmed": false,
+  "vehicle": {
+    "width_m": null,
+    "length_m": null,
+    "height_m": null,
+    "wheelbase_m": 0.21,
+    "track_m": 0.149
+  },
+  "gear": {
+    "clear_width_m": 0.254,
+    "bar_length_m": 0.3048,
+    "bar_radius_m": 0.03,
+    "height_clearance_m": null,
+    "inward_slope": null,
+    "confirmed": false
+  },
+  "clearance_margin_m": 0.015,
+  "parking_goal": null,
+  "motion_model": {
+    "forward_mps": 0.64,
+    "reverse_mps": 0.5,
+    "left_dps": 91.0,
+    "right_dps": 127.0,
+    "confirmed": false,
+    "max_forward_mps": 1.2,
+    "max_reverse_mps": 1.2,
+    "max_left_dps": 160.0,
+    "max_right_dps": 200.0,
+    "stopping_distance_m": 0.02,
+    "angular_stop_deg": 5.0
+  },
+  "notes": "Operator estimates: bars approximately 12 inches, spacing approximately 10 inches. Interpretation of spacing, full car envelope and tag/camera scale unverified. Forward/reverse responses are nominal median tag-range change during bounded outside-gear probes at PWM1800; include filter, perspective and slip error. They are not certified travel bounds.",
+  "camera_to_car": null,
+  "drone_to_anchor": null,
+  "drone_anchor_id": 14,
+  "camera_mount_servo": [
+    1500,
+    1500
+  ],
+  "camera_matrix": [
+    [
+      968,
+      0,
+      640
+    ],
+    [
+      0,
+      968,
+      360
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "distortion": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "localization_error_confirmed": false,
+  "position_error_bound_m": null
+}

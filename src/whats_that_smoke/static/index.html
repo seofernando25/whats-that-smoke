@@ -17,6 +17,14 @@
 
       <div class="feed-label"><span id="feed-stats">CAMERA · 1280×720 · MONO GS</span><span class="connection" id="connection"><i></i> Connecting</span></div>
 
+      <section id="parking-panel" hidden aria-label="Drone parking map">
+        <strong>DRONE PARKING</strong><p id="parking-status">Observing</p>
+        <canvas id="parking-map" width="320" height="230" aria-label="Estimated tag and camera map"></canvas>
+        <small id="parking-reference"></small><p id="parking-detail"></p>
+        <small>Gear estimate: 10 in spacing · 12 in bars. Full car envelope unknown.</small>
+        <p id="parking-blockers"></p><details><summary>Calibration details</summary><small id="parking-calibration-details"></small></details><p id="parking-plan-result"></p>
+        <button id="park-preview" disabled>PREVIEW ROUTE</button><button id="park-start" disabled>PARK</button><button id="park-stop" disabled>STOP PARKING</button>
+      </section>
       <dl class="status" aria-live="polite">
         <div id="heading-widget" class="heading-widget">
           <div class="heading-dial" aria-label="Relative heading compass">
@@ -58,6 +66,7 @@
         <button id="stabilize-toggle" aria-pressed="false">STABILIZE OFF</button>
         <button id="aruco-toggle" aria-pressed="false">ARUCO OFF</button>
         <button id="follow-toggle" aria-pressed="false">FOLLOW OFF</button>
+        <button id="map-toggle">MAP</button>
         <label for="speed">Speed <output id="speed-value">1800</output></label>
         <input id="speed" type="range" min="500" max="1800" step="50" value="1800" />
         <span class="meter" aria-hidden="true"><i id="speed-meter"></i></span>
@@ -73,6 +82,7 @@
     <span id="watchdog" hidden>600 ms</span>
   </main>
   <script src="/static/vendor/ort.wasm.min.js" defer></script>
+  <script src="/static/parking.js" defer></script>
   <script src="/static/app.js" defer></script>
   <script src="/static/vision.js" defer></script>
 </body>
