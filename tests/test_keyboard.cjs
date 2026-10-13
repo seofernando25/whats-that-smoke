@@ -24,3 +24,31 @@ for (const [pressed, type, forward, turn] of [
   assert.equal(messages[0].turn, turn);
 }
 console.log('8 keyboard mappings passed');
+
+const handlers = {};
+const messages = [];
+const context = {
+  keys: new Set(), state: {armed:true, you_are_owner:true, aruco_follow:false},
+  speed: {value:1800, addEventListener: (event, fn) => { handlers.speed = fn; }},
+  speedValue: {}, WebSocket:{OPEN:1},
+  socket: {readyState:1, send: data => messages.push(JSON.parse(data))},
+  document: {querySelectorAll: () => []},
+  $: selector => selector === '#follow-toggle'
+    ? {addEventListener: (event, fn) => { handlers.follow = fn; }} : {style:{}}
+};
+const followListener = source.split('\n').find(line => line.startsWith('$("#follow-toggle").addEventListener'));
+const speedListener = source.slice(source.indexOf('speed.addEventListener("input"'), source.indexOf('window.addEventListener("blur"'));
+vm.runInNewContext(functions + '\n' + followListener + '\n' + speedListener, context);
+handlers.follow();
+assert.equal(messages.at(-1).speed_limit, 1800);
+assert.equal(messages.at(-1).follow, true);
+context.state.aruco_follow = true;
+context.speed.value = 1200;
+handlers.speed();
+assert.equal(messages.at(-1).speed_limit, 1200);
+assert.equal(messages.at(-1).follow, undefined);
+const count = messages.length;
+context.state.you_are_owner = false;
+handlers.speed();
+assert.equal(messages.length, count);
+console.log('Follow speed slider and ownership checks passed');

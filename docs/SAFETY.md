@@ -19,7 +19,8 @@ motion command => finite duration + explicit stop/finally
 exception|disconnect|SIGINT => all motor PWM=0
 service-stop => freeze controller > independent PCA9685 brake > terminate
 aruco-lost|frame-stale>450ms|owner-disconnect => brake
-manual-input-timeout|keyup|blur|hidden|STOP => brake; connected owner remains armed until explicit DISARM
+manual-input-timeout => brake; connected owner remains armed
+keyup|blur|hidden|STOP => disable follow + brake; connected owner remains armed until explicit DISARM
 owner-disconnect|shutdown => brake + release ownership
 unknown address/register => no write
 servo bounds unknown => no pulse
@@ -34,3 +35,5 @@ smoke|odor|heat|brownout|unexpected-motion => power-cut > diagnosis
 throttled!=0x0 => stop load; inspect supply/thermal
 I2C contention/error burst => stop scans/writes; power-cycle only with approval
 ```
+
+`follow pivot := independent deadline <=250ms; checked10ms; stale decode/frame and owner-loss brakes remain; each new pulse waits for post-pulse camera measurement.`

@@ -47,6 +47,70 @@ class TrackMemory:
     bbox: tuple[float, float, float, float] | None = None
 
 
+@dataclass
+class FollowCommand:
+    forward: float = 0.0
+    turn: float = 0.0
+    duration: float | None = None
+    reason: str = "aruco-centering-settle"
+
+
+class FollowSteering:
+    """Visual centering with full-strength, bounded Q/E-style pivots."""
+    CENTER_START = .07
+    CENTER_STOP = .04
+
+    def __init__(self):
+        self.turn_gain = 1.0
+        self.reset()
+
+    def reset(self):
+        self.centering = False
+        self.pulse_end = self.settle_until = 0.0
+        self.previous_error = None
+        self.previous_duration = 0.0
+
+    def step(self, error, distance, now, captured_at=None):
+        captured_at = now if captured_at is None else captured_at
+        close = distance <= TARGET_DISTANCE_M + .035
+        if abs(error) <= self.CENTER_STOP:
+            was_pivoting = self.previous_error is not None
+            self.reset()
+            if was_pivoting:
+                return FollowCommand(reason="aruco-centered")
+        if self.previous_error is not None:
+            # Never repeat a pivot using a picture captured before it finished.
+            if now < self.pulse_end:
+                if error * self.previous_error <= 0:
+                    self.pulse_end = now
+                    self.settle_until = now + .12
+                    return FollowCommand()
+                return None
+            if now < self.settle_until or captured_at < self.pulse_end:
+                return FollowCommand()
+            change = abs(self.previous_error - error)
+            if change > .015:
+                observed_gain = change / self.previous_duration
+                self.turn_gain = max(.15, min(5., .5 * self.turn_gain + .5 * observed_gain))
+            else:
+                # Increase the next impulse if the wheels did not break away.
+                self.turn_gain = max(.15, self.turn_gain * .65)
+            self.previous_error = None
+        self.centering = self.centering or abs(error) > self.CENTER_START
+        if self.centering:
+            duration = max(.04, min(.18, (abs(error) - self.CENTER_STOP) * .85 / self.turn_gain))
+            self.previous_error = error
+            self.previous_duration = duration
+            self.pulse_end = now + duration
+            self.settle_until = self.pulse_end + .12
+            return FollowCommand(turn=-math.copysign(1., error), duration=duration,
+                                 reason="aruco-centering")
+        if close:
+            return FollowCommand(reason="aruco-target-reached")
+        return FollowCommand(forward=max(0., min(.48, (distance - TARGET_DISTANCE_M) * .9)),
+                             reason="aruco-approaching")
+
+
 class ArucoFollower:
     def __init__(self, camera: "CameraStream", controller: "RobotController") -> None:
         self.camera = camera
@@ -54,6 +118,8 @@ class ArucoFollower:
         self.enabled = False
         self.follow = False
         self.owner: str | None = None
+        self.follow_speed_limit = 1800
+        self.steering = FollowSteering()
         self.task: asyncio.Task[None] | None = None
         self.last_sequence = -1
         self.last_detection_at = 0.0
@@ -92,7 +158,14 @@ class ArucoFollower:
             except asyncio.CancelledError:
                 pass
 
-    async def configure(self, client_id: str, enabled: bool, follow: bool | None = None) -> None:
+    async def configure(self, client_id: str, enabled: bool, follow: bool | None = None,
+                        speed_limit: int | None = None) -> None:
+        if speed_limit is not None:
+            if self.follow and self.owner != client_id:
+                raise PermissionError("only the follow controller can change speed")
+            if follow and (self.controller.state.owner != client_id or not self.controller.state.armed):
+                raise PermissionError("arm controls before enabling ArUco follow")
+            self.follow_speed_limit = max(500, min(1800, int(speed_limit)))
         if follow:
             if self.controller.state.owner != client_id or not self.controller.state.armed:
                 raise PermissionError("arm controls before enabling ArUco follow")
@@ -100,6 +173,7 @@ class ArucoFollower:
             self.owner = client_id
             self.enabled = True
             self.follow = True
+            self.steering.reset()
         elif follow is False:
             await self.disable_follow("aruco-follow-disabled")
         self.enabled = bool(enabled) or self.follow
@@ -112,6 +186,7 @@ class ArucoFollower:
         was_following = self.follow
         self.follow = False
         self.owner = None
+        self.steering.reset()
         self.sync_state()
         if was_following:
             await self.controller.stop(reason, release=False)
@@ -122,6 +197,7 @@ class ArucoFollower:
         state.aruco_follow = self.follow
 
     def clear_detection(self, status: str) -> None:
+        self.steering.reset()
         state = self.controller.state
         state.aruco_visible = False
         state.aruco_id = None
@@ -706,6 +782,7 @@ class ArucoFollower:
                 detection = detections[0]
                 self.target_id = detection.tag_id
                 self.filter_state = None
+                self.steering.reset()
             if any(not item.tracked for item in detections):
                 self.last_detection_at = time.monotonic()
             state = self.controller.state
@@ -734,17 +811,20 @@ class ArucoFollower:
                 await self.disable_follow("aruco-control-lost")
                 continue
             if detection.age_s > 0.35:
+                self.steering.reset()
                 await self.controller.stop("aruco-decode-stale", release=False)
                 continue
-            turn = max(-0.55, min(0.55, -1.15 * error_x))
-            distance_error = filtered_distance - TARGET_DISTANCE_M
-            forward = max(0.0, min(0.48, distance_error * 0.9))
-            if abs(error_x) > 0.32:
-                forward = 0.0
-            if distance_error <= 0.035 and abs(error_x) <= 0.08:
-                await self.controller.stop("aruco-target-reached", release=False)
+            command = self.steering.step(error_x, filtered_distance, completed, captured_at)
+            if self.steering.centering:
+                state.aruco_status = "centering"
+            if command is None:
+                await self.controller.broadcast()
+            elif not command.forward and not command.turn:
+                await self.controller.stop(command.reason, release=False)
             else:
-                await self.controller.drive(self.owner, forward, 0.0, turn, 1300, autonomous=True)
+                await self.controller.drive(self.owner, command.forward, 0.0, command.turn,
+                                            self.follow_speed_limit, autonomous=True,
+                                            duration=command.duration)
 
 
 def state_defaults() -> dict[str, Any]:

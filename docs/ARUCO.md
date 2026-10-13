@@ -37,19 +37,23 @@ distance precision => calibrate camera intrinsics later; control uses conservati
 
 ```text
 gate := browser owner + ARM + explicit FOLLOW ON
-target := z/euclidean≈0.30m; tolerance=0.035m; center tolerance=0.08 frame-half
+target := z/euclidean≈0.30m; distance tolerance=0.035m
 error_x := (tag_cx-640)/640
-turn := clamp(-1.15*error_x, -0.55, 0.55)
-forward := clamp(0.9*(distance-0.30), 0, 0.48)
-abs(error_x)>0.32 => forward=0; rotate-only
-speed_limit := 1300; reverse∅
+center := begin correction at |error_x|>.07; finish at <=.04; hysteresis avoids chatter
+turn := full ±1 differential pivot (same polarity as manual Q/E); forward=0 while centering, including inside target distance
+pulse := .04.. .18s; independent hardware-thread deadline checked10ms; motor braking independent of detector completion
+feedback := settle>=.12s + require a frame captured after pulse end before another pulse; estimate image response to shorten overshooting pulses or lengthen no-response pulses
+approach := only after centering; forward=clamp(0.9*(distance-0.30),0,.48); turn=0; no reverse
+speed_limit := browser Speed slider500..1800; default1800; FOLLOW request supplies selected speed; live owner-only speed updates
+STOP := disable follow + brake; preserve ARM for connected owner; explicit DISARM releases ownership
+
 ```
 
 ## fail-safe
 
 ```text
 tag∅|frame stale>450ms|disconnect|disarm|disable|shutdown => brake
-watchdog=600ms independent hardware thread; loop stall=>brake+disarm
+watchdog=600ms independent hardware thread; loop stall=>brake; connected owner remains armed
 manual drive while FOLLOW ON => rejected
 blind search∅; autonomous reverse∅; IDs outside DICT_4X4_50 ignored
 frame age>450ms => overlay cleared even if FOLLOW OFF; stale JPEG resend∅

@@ -160,6 +160,7 @@ class RobotController:
         self.motion_task: asyncio.Task | None = None
         self.last_operator_command = 0.0
         self.last_pwm_at = time.monotonic()
+        self.drive_deadline: float | None = None
         self.imu_sample_at: float | None = None
         self.heading = RelativeHeading()
 
@@ -195,6 +196,7 @@ class RobotController:
                 and self.imu_sample_at is not None and now - self.imu_sample_at <= .15)
 
     def _brake_locked(self, reason, release=False):
+        self.drive_deadline = None
         self.motion.cancel()
         if self.bus: _stop_wheels(self.bus)
         self.state.forward = self.state.strafe = self.state.turn = self.state.turn_target_dps = 0
@@ -208,7 +210,9 @@ class RobotController:
         with self.hw_lock:
             if not self.state.armed: return
             reason = None
-            if self.motion.mode and now - self.last_operator_command > WATCHDOG_SECONDS:
+            if self.drive_deadline is not None and now >= self.drive_deadline:
+                reason = "aruco-pivot-complete"
+            elif self.motion.mode and now - self.last_operator_command > WATCHDOG_SECONDS:
                 reason = "input-watchdog"
             elif self.motion.requires_gyro and not self._imu_ready(now):
                 reason = "gyro-unavailable"
@@ -217,7 +221,7 @@ class RobotController:
             if reason: self._brake_locked(reason)
 
     def _guard(self):
-        while not self.guard_stop.wait(.05):
+        while not self.guard_stop.wait(.01):
             self._guard_check(time.monotonic())
 
     async def _motion_loop(self):
@@ -301,21 +305,27 @@ class RobotController:
     async def sidestep(self, cid: str, direction: int, limit: int) -> None:
         raise PermissionError("side-step disabled; use direct turning")
 
-    async def drive(self, cid, forward, strafe, turn, limit, autonomous=False):
+    async def drive(self, cid, forward, strafe, turn, limit, autonomous=False, duration=None):
         async with self.lock:
             if self.state.owner != cid or not self.state.armed: raise PermissionError("arm controls first")
             if aruco.follow and not autonomous: raise PermissionError("disable ArUco follow before manual drive")
             if not all(math.isfinite(value) for value in (forward, strafe, turn)): raise ValueError
             forward = max(-1., min(1., forward)); strafe = max(-1., min(1., strafe)); turn = max(-1., min(1., turn)); limit = max(500, min(1800, limit))
             if strafe: raise ValueError("use side-step command for ordinary wheels")
+            if duration is not None:
+                if not autonomous or not math.isfinite(duration): raise ValueError("invalid pulse duration")
+                duration = max(.01, min(.25, float(duration)))
             with self.hw_lock:
                 now = time.monotonic()
+                self.drive_deadline = None
                 self.state.strafe = 0.0
                 if autonomous:
                     self.motion.cancel()
                     self.state.motion_mode = "aruco-follow"
                     self.state.turn_target_dps = 0
                     self._apply_vector(forward, turn, limit)
+                    if duration is not None:
+                        self.drive_deadline = now + duration
                 elif not forward and not turn:
                     self._brake_locked("key-release")
                 else:
@@ -380,10 +390,12 @@ async def websocket_endpoint(ws: WebSocket):
                 elif kind == "sidestep": await controller.sidestep(cid, int(m.get("direction",0)), int(m.get("speed_limit",1200)))
                 elif kind == "arm": await controller.arm(cid)
                 elif kind == "camera": await controller.camera_move(cid, str(m.get("axis")), int(m.get("delta", 0)))
-                elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"))
+                elif kind == "aruco": await aruco.configure(cid, bool(m.get("enabled")), m.get("follow"), m.get("speed_limit"))
                 elif kind == "heading-calibrate": controller.heading.request_calibration()
                 elif kind == "heartbeat": await ws.send_json(controller.payload(cid))
-                elif kind == "stop" and controller.state.owner in (None,cid): await controller.stop("client-stop", m.get("reason") == "disarm")
+                elif kind == "stop" and controller.state.owner in (None,cid):
+                    await aruco.disable_follow("client-stop")
+                    await controller.stop("client-stop", m.get("reason") == "disarm")
                 else: await ws.send_json({"type":"error","error":"unknown message"})
             except PermissionError as e: await ws.send_json({"type":"error","error":str(e)})
             except (TypeError, ValueError, json.JSONDecodeError): await ws.send_json({"type":"error","error":"invalid message"})

@@ -161,11 +161,12 @@ document.addEventListener("keyup", (event) => {
 $("#stop").addEventListener("click", () => stop("button-stop"));
 $("#arm").addEventListener("click", () => state.armed && state.you_are_owner ? stop("disarm") : send({ type: "arm" }));
 $("#aruco-toggle").addEventListener("click", () => send({ type: "aruco", enabled: !state.aruco_enabled, follow: state.aruco_follow ? false : null }));
-$("#follow-toggle").addEventListener("click", () => send({ type: "aruco", enabled: true, follow: !state.aruco_follow }));
+$("#follow-toggle").addEventListener("click", () => send({ type: "aruco", enabled: true, follow: !state.aruco_follow, speed_limit: Number(speed.value) }));
 $("#heading-calibrate").addEventListener("click", () => send({ type: "heading-calibrate" }));
 speed.addEventListener("input", () => {
   speedValue.textContent = speed.value;
   $("#speed-meter").style.width = `${((speed.value - 500) / 1300) * 100}%`;
+  if (state.aruco_follow && state.you_are_owner) send({ type: "aruco", enabled: true, speed_limit: Number(speed.value) });
   if (keys.size) drive();
 });
 window.addEventListener("blur", () => stop("window-blur"));

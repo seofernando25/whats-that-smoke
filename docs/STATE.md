@@ -145,3 +145,12 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Added camera capture timeout/recovery with 5s startup grace, 2s frame timeout, graceful termination and bounded kill fallback. Three camera regression functions and seven simple-control checks passed; capture currently fresh at 30fps.
 - Stationary validation was follow-off and stopped. The user subsequently operated follow with multiple tags and accepted the detection goal as complete; no additional agent movement or camera fault injection was performed.
 - Source matches tested candidates; dashboard service remains active. Rollback: /home/advanced/wts-curved-tag-backup-WzCwZj/{aruco.py,web.py,test_aruco.py,ARUCO.md,STATE.md}; new tests/fixtures/curled-id0.png and tests/test_camera.py.
+
+## 2026-10-13 follow centering improvement
+
+- Prior follow turn was proportional to image error with a hidden1300 PWM cap; small corrections could command far less torque than manual Q/E. Physical breakaway threshold remains uncalibrated.
+- Follow now aligns using full-strength Q/E-style pivots at the selected speed, then approaches straight. It also centers when already close. Bounded40..180ms pulses, independent braking deadlines, camera settling and visual response adaptation limit overshoot and repeated blind commands.
+- Speed slider updates the owner's active follow speed; STOP disables follow and brakes without automatically disarming. Fresh-frame/decode, ownership and disconnect gates remain.
+- Verified with controller mocks, a simulated80% motor dead zone at three response rates in both directions, pulse expiry without camera processing, and UI speed/ownership contracts. Physical centering has not been tested by the agent.
+- Validation: 49 Python tests and keyboard/follow-slider contract checks passed. Pi checks confirmed close-tag full-strength pivots and independent pulse braking with mocked hardware; UI/API served correctly and capture was fresh at30.1fps. Service restarted with follow off and robot disarmed.
+- Rollback: /home/advanced/wts-follow-center-backup-obbyd7zl/{aruco.py,web.py,app.js,ARUCO.md,DASHBOARD.md,SAFETY.md,STATE.md,.gitignore}.
