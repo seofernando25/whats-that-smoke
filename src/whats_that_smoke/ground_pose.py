@@ -35,6 +35,7 @@ class SkidPoseObserver:
         except cv2.error:return None
         candidates=[]
         for rvec,tvec in zip(result[1],result[2]):
+            rvec,tvec=cv2.solvePnPRefineLM(self.objects,pixels,self.k,np.zeros(5),rvec,tvec)
             rotation=cv2.Rodrigues(rvec)[0];position=-rotation.T@tvec.reshape(3)
             projected=cv2.projectPoints(self.objects,rvec,tvec,self.k,np.zeros(5))[0].reshape(4,2)
             error=float(np.sqrt(np.mean(np.sum((projected-pixels)**2,axis=1))))

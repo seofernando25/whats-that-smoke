@@ -172,3 +172,10 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Stationary camera1400/1500/1600µs sweep showed≈0.19px static-scene motion; camera view effectively unchanged. Restored original servo values and disarmed after the sweep.
 - Added independent skid-ground pose/tracking observer and two meaningful geometry/tracker tests. Initial seed≈35° oblique approach; systematic geometry error remains unverified.
 - Pi SSH and dashboard subsequently became unreachable while the router remained in the local ARP table. The next short motor probe was not deployed or executed; last agent-controlled state was stopped/disarmed. Goal remains physical parking, not prototype completion.
+
+## 2026-10-13 motor trials suspended on wired supply
+
+- Operator confirmed the LiPo was depleted and the car is now on a wire. Current instruction: do not run any motors; commit and push progress only. Resume physical motion only after a later operator instruction authorizes it.
+- Refined skid-plane pose candidates with LM before geometric validation. The recorded seed's reprojection RMS decreased from approximately5.7px to4.4px; systematic geometry and mounting error remain unverified.
+- An outside-only alignment route to a camera-proxy staging point0.55m before the drone centre was computed and all42 sampled poses/sweeps checked against the nominal skids, using a200×280mm envelope inflated100mm. This route was not executed and does not demonstrate parking.
+- Prior Pi connection loss is explained by the depleted LiPo. No motor probe was issued after the outage. Existing raw captures and telemetry remain in ignored local work storage.
