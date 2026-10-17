@@ -4,11 +4,11 @@ from unittest.mock import patch
 import cv2
 import numpy as np
 import pytest
-from whats_that_smoke.parking import (Pose2, Capsule, collides, swept_clear, plan_route,
+from ugv.parking import (Pose2, Capsule, collides, swept_clear, plan_route,
     readiness, ParkingEstimator, DockingFeedback, transform, inverse, gear_obstacles, CONFIG_PATH)
-from whats_that_smoke.odometry import SceneOdometry
-from whats_that_smoke.aruco import Detection
-from whats_that_smoke.web import RobotController, RobotState
+from ugv.odometry import SceneOdometry
+from ugv.aruco import Detection
+from ugv.web import RobotController, RobotState
 
 
 def test_collision_checks_full_rectangle_and_rotating_corners():
@@ -126,7 +126,7 @@ def test_visual_pose_from_known_static_landmarks():
 def test_survey_deadline_and_parking_camera_interlock():
     async def scenario():
         c=RobotController();c.state.owner='test';c.state.armed=True;c._write=lambda wheels:None
-        from whats_that_smoke import web
+        from ugv import web
         with patch.object(web,'aruco',SimpleNamespace(follow=False)),patch.object(web.camera,'metrics',return_value={'camera_frame_age_ms':10}),patch.object(c,'_imu_ready',return_value=True):
             await c.survey_step('test',0,1,1800,.12)
             c._guard_check(c.drive_deadline)
@@ -174,7 +174,7 @@ def test_calibrated_parking_pose_uses_configured_intrinsics_and_tag_size():
 
 
 def test_stop_cancels_pending_planning_before_it_can_start_motors():
-    from whats_that_smoke import web
+    from ugv import web
     from unittest.mock import AsyncMock
     async def scenario():
         c=RobotController();c.state.owner='test';c.state.armed=True

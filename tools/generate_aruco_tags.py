@@ -21,7 +21,7 @@ def main() -> None:
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
     pdf = Canvas(str(args.output), pagesize=letter)
     page_w, page_h = letter
-    pdf.setTitle("What's That Smoke - 50 mm ArUco Tags 0-4")
+    pdf.setTitle("UGV - 50 mm ArUco Tags 0-4")
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(16 * mm, page_h - 16 * mm, "ARUCO DICT_4X4_50 - IDs 0-4")
     pdf.setFont("Helvetica", 8)

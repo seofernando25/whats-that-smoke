@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from whats_that_smoke.ground_pose import SkidPoseObserver
+from ugv.ground_pose import SkidPoseObserver
 
 
 def test_ground_rectangle_recovers_camera_pose_and_rejects_degenerate_points():

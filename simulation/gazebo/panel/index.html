@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UGV · Freenove Drive</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<div class="shell">
+  <header><a class="brand" href="/" aria-label="Freenove controls"><span class="mark">↗</span> UGV <small>LAB</small></a><div class="header-right"><span class="tag">SIMULATION ONLY</span><button id="launch" class="subtle">Open Gazebo ↗</button></div></header>
+  <section class="intro"><div><div class="eyebrow">LOCAL DRIVE CONSOLE</div><h1>Take the wheel<span>.</span></h1><p>Hold a key or a button to drive. Release to stop.</p></div><div id="connection" class="connection"><i></i><span>Connecting to Gazebo</span></div></section>
+  <main>
+    <section class="card drive-card"><div class="card-head"><h2>Drive controls</h2><span class="tiny">WASD + QE</span></div><p class="hint">Combine W / S with A / D for curved turns.</p>
+      <div class="keypad">
+        <button data-key="KeyQ" aria-label="Q turn left in place"><span class="symbol">↶</span><b>Q</b><small>Pivot left</small></button>
+        <button data-key="KeyW" aria-label="W forward"><span class="symbol">↑</span><b>W</b><small>Forward</small></button>
+        <button data-key="KeyE" aria-label="E turn right in place"><span class="symbol">↷</span><b>E</b><small>Pivot right</small></button>
+        <button data-key="KeyA" aria-label="A steer left"><span class="symbol">←</span><b>A</b><small>Steer left</small></button>
+        <button data-key="KeyS" aria-label="S reverse"><span class="symbol">↓</span><b>S</b><small>Reverse</small></button>
+        <button data-key="KeyD" aria-label="D steer right"><span class="symbol">→</span><b>D</b><small>Steer right</small></button>
+      </div>
+      <button id="stop" class="stop"><span>■ &nbsp; STOP</span><kbd>SPACE / ESC</kbd></button>
+      <div class="speed-head"><label for="speed">Motor power (same scale as the car)</label><output id="speed-value">1800 <small>PWM</small></output></div>
+      <input id="speed" type="range" min="500" max="1800" step="100" value="1800" aria-label="Motor power (same scale as the car)">
+      <div class="range-labels"><span>Low · 500</span><span>1800 · Full dashboard power</span></div>
+      <p class="focus-note" id="focus-note">Keep this window focused. Low power may not overcome tire scrub.</p>
+    </section>
+    <section class="card view-card"><div class="card-head"><h2>On the test pad</h2><span class="live-label">WORLD POSITION</span></div>
+      <div class="map"><canvas id="map" width="640" height="480" aria-label="Top-down position and recent path of the simulated car"></canvas><div class="map-caption"><i></i> Car &nbsp; <span>·</span> Recent path <span class="map-scale">10 cm grid</span></div></div>
+      <div class="telemetry"><div><span>X POSITION</span><strong id="x">0.00<small>m</small></strong></div><div><span>Y POSITION</span><strong id="y">0.00<small>m</small></strong></div><div><span>HEADING</span><strong id="heading">0<small>°</small></strong></div></div>
+      <div class="simulation"><div><h3>Simulation</h3><p id="motion">Waiting for the simulation</p></div><div class="sim-buttons"><button id="play">▶ Play</button><button id="pause">Ⅱ Pause</button><button id="reset" title="Stop and reset the world; reset leaves the simulation paused">↺ Reset</button></div></div>
+    </section>
+  </main>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <footer><span><i></i> Localhost · Gazebo car</span><span>Release, switch windows, or disconnect → car stops</span></footer>
+</div>
+<script src="/app.js"></script>
+</body></html>

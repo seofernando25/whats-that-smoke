@@ -33,3 +33,5 @@ L3 PROTOCOL.md
 `ARUCO.md := 50mm IDs0..4 + pose/follow equations + autonomous failsafes`
 
 `PARKING.md := provisional tag/IMU/scene map + swept-footprint planner + calibrated entry gates`
+
+`DYNAMICS.md := raw 100Hz IMU/PWM capture + drift-bracketed real-car identification + Gazebo effort fit`

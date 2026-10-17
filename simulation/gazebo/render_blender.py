@@ -5,6 +5,8 @@ from mathutils import Vector, Euler
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE))
 from assembly import assembly, COLORS
+from motor_physics import load_profile
+profile=load_profile()
 args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
 out=Path(args[0]).resolve() if args else HERE/'preview'
 out.mkdir(parents=True,exist_ok=True)
@@ -18,7 +20,7 @@ for name,color in COLORS.items():
     m.use_nodes=True
     bs=m.node_tree.nodes.get('Principled BSDF')
     bs.inputs['Base Color'].default_value=(*color,1)
-    bs.inputs['Roughness'].default_value=.75 if name=='rubber' else .43
+    bs.inputs['Roughness'].default_value=profile['rubber_roughness_visual'] if name=='rubber' else .43
     bs.inputs['Metallic'].default_value=.75 if name in ('silver','gold') else 0
     mats[name]=m
 assembly_collection=bpy.data.collections.new('Freenove car - photo approximation')
@@ -88,13 +90,14 @@ bg=scene.world.node_tree.nodes.get('Background')
 bg.inputs['Color'].default_value=(.55,.60,.7,1)
 bg.inputs['Strength'].default_value=.35
 scene.unit_settings.system='METRIC'
-scene.view_settings.view_transform='AgX'
-scene.render.filepath=str(out/'freenove-car-preview-v2.png')
+scene.view_settings.view_transform='Standard'
+scene.view_settings.exposure=-.7
+scene.render.filepath=str(out/'freenove-car-preview-v3.png')
 for screen in bpy.data.screens:
     for area in screen.areas:
         if area.type=='VIEW_3D': area.spaces.active.region_3d.view_perspective='CAMERA'
 bpy.ops.object.select_all(action='DESELECT')
-bpy.ops.wm.save_as_mainfile(filepath=str(out/'freenove-car-v2.blend'))
+bpy.ops.wm.save_as_mainfile(filepath=str(out/'freenove-car-v3.blend'))
 bpy.ops.render.render(write_still=True)
 # Rotate just the assembly to show its belly, resting on the tire edges again.
 for obj in list(assembly_collection.objects):
@@ -103,5 +106,18 @@ for obj in list(assembly_collection.objects):
     obj.rotation_euler=(Euler((math.pi,0,0)).to_matrix()@obj.rotation_euler.to_matrix()).to_euler()
 for obj in list(bpy.data.objects):
     if obj.type=='FONT': obj.hide_render=True
-scene.render.filepath=str(out/'freenove-car-underside-v2.png')
+scene.render.filepath=str(out/'freenove-car-underside-v3.png')
+bpy.ops.render.render(write_still=True)
+
+# A detail view of one TT motor, made from the same Gazebo visual parts.
+for obj in list(assembly_collection.objects):
+    obj.location.y=-obj.location.y
+    obj.location.z=.0635-obj.location.z
+    obj.rotation_euler=(Euler((math.pi,0,0)).to_matrix()@obj.rotation_euler.to_matrix()).to_euler()
+    obj.hide_render=not obj.name.startswith('chassis / front_left_')
+ground.location.z=.0249
+cam.location=(.135,-.075,.105)
+cam.rotation_euler=(Vector((.044,.0366,.034))-cam.location).to_track_quat('-Z','Y').to_euler()
+cam.data.ortho_scale=.10
+scene.render.filepath=str(out/'tt-motor-detail.png')
 bpy.ops.render.render(write_still=True)

@@ -1,6 +1,6 @@
 import itertools
 from unittest.mock import MagicMock, patch
-from whats_that_smoke import web as m
+from ugv import web as m
 
 def check_stall_recovery(byte_spam, force_kill=False):
     camera=m.CameraStream();processes=[];clock=itertools.count(0,.3)

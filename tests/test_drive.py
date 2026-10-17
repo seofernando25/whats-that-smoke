@@ -4,9 +4,9 @@ import asyncio
 import math
 import time
 from unittest.mock import patch
-from whats_that_smoke.motion import GyroMotion, MotionFault, angle_error, ramp_wheels
+from ugv.motion import GyroMotion, MotionFault, angle_error, ramp_wheels
 
-from whats_that_smoke.web import RobotController
+from ugv.web import RobotController
 
 
 def drive_vector(forward: float, strafe: float, turn: float) -> dict[str, int]:
@@ -208,7 +208,7 @@ def test_independent_watchdog_uses_browser_lease_even_when_motor_loop_fresh():
     c.last_operator_command = now - .7
     c.last_drive = now
     c.state.stopped = False
-    with patch("whats_that_smoke.web._stop_wheels") as brake:
+    with patch("ugv.web._stop_wheels") as brake:
         c._guard_check(now)
         brake.assert_called_once()
     assert c.state.armed and c.state.reason == "input-watchdog"

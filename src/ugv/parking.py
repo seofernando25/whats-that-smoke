@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 
 _repository_config = Path(__file__).resolve().parents[2] / 'config' / 'parking.json'
-CONFIG_PATH = Path(os.environ['WTS_PARKING_CONFIG']) if os.environ.get('WTS_PARKING_CONFIG') else (
+CONFIG_PATH = Path(os.environ['UGV_PARKING_CONFIG']) if os.environ.get('UGV_PARKING_CONFIG') else (
     _repository_config if _repository_config.exists() else Path(__file__).with_name('default_parking.json'))
 
 

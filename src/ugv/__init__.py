@@ -195,7 +195,7 @@ def led_test_gpio18(brightness: int, dwell: float) -> int:
     import os
 
     if os.geteuid() != 0:
-        raise SystemExit("refused: GPIO18 WS2812 driver requires root; use sudo .venv/bin/wts led-test-gpio18")
+        raise SystemExit("refused: GPIO18 WS2812 driver requires root; use sudo .venv/bin/ugv led-test-gpio18")
 
     from rpi_ws281x import Color, PixelStrip
 
@@ -226,7 +226,7 @@ def led_test_gpio18(brightness: int, dwell: float) -> int:
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(prog="wts")
+    root = argparse.ArgumentParser(prog="ugv")
     commands = root.add_subparsers(dest="command", required=True)
 
     snap = commands.add_parser("snapshot", help="capture a rotation-corrected JPEG")

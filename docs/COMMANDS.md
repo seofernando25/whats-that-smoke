@@ -1,16 +1,16 @@
 # COMMANDS
 
-`cwd:=/home/advanced/whats-that-smoke`
+`cwd:=/home/advanced/ugv`
 
 ```text
-snapshot := uv run wts snapshot
-snapshot@path := uv run wts snapshot --output <file.jpg>
-servo.pan := uv run wts servo-test pan
-servo.tilt := uv run wts servo-test tilt
-wheel.each := uv run wts wheel-test
-wheel.one := uv run wts wheel-test <front-left|rear-left|front-right|rear-right>
-led.each.rgb := uv run wts led-test
-led.each.rgb.gpio18 := sudo .venv/bin/wts led-test-gpio18
+snapshot := uv run ugv snapshot
+snapshot@path := uv run ugv snapshot --output <file.jpg>
+servo.pan := uv run ugv servo-test pan
+servo.tilt := uv run ugv servo-test tilt
+wheel.each := uv run ugv wheel-test
+wheel.one := uv run ugv wheel-test <front-left|rear-left|front-right|rear-right>
+led.each.rgb := uv run ugv led-test
+led.each.rgb.gpio18 := sudo .venv/bin/ugv led-test-gpio18
 ```
 
 ## semantics
@@ -32,3 +32,11 @@ led-test-gpio18: same sequence via PWM/DMA GPIO18; requires root
 
 `servo gate:=car power✓ + clear linkage✓ + one command at time`
 `wheel gate:=chassis-lifted✓ + clear-zone✓ + human-present✓`
+
+```sh
+ssh advanced
+cd ~/ugv
+sudo systemctl status ugv-dashboard.service
+sudo systemctl restart ugv-dashboard.service
+uv run ugv --help
+```

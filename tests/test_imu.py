@@ -1,4 +1,4 @@
-from whats_that_smoke.imu import parse_imu_line
+from ugv.imu import parse_imu_line
 
 
 def test_parse_imu_line():

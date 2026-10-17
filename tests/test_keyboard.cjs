@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = fs.readFileSync('src/whats_that_smoke/static/app.js', 'utf8');
+const source = fs.readFileSync('src/ugv/static/app.js', 'utf8');
 const functions = source.slice(source.indexOf('function vector()'), source.indexOf('function stop('));
 for (const [pressed, type, forward, turn] of [
   [['KeyW','KeyA'], 'drive', 1, 1],

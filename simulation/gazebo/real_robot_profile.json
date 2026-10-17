@@ -1,0 +1,2022 @@
+{
+  "pwm_rise_tau": [
+    {
+      "forward": 0,
+      "turn": 1,
+      "keys": "Q",
+      "tau_s": 0.05999999999999999
+    },
+    {
+      "forward": 0,
+      "turn": -1,
+      "keys": "E",
+      "tau_s": 0.08499999999999999
+    },
+    {
+      "forward": 1,
+      "turn": 1,
+      "keys": "WA",
+      "tau_s": 0.16499999999999998
+    },
+    {
+      "forward": 1,
+      "turn": -1,
+      "keys": "WD",
+      "tau_s": 0.05999999999999999
+    },
+    {
+      "forward": -1,
+      "turn": 1,
+      "keys": "SA",
+      "tau_s": 0.145
+    },
+    {
+      "forward": -1,
+      "turn": -1,
+      "keys": "SD",
+      "tau_s": 0.11999999999999997
+    }
+  ],
+  "schema_version": 1,
+  "measured_total_mass_kg": 0.5774,
+  "hardware_pwm_max": 1800,
+  "lateral_slip_m_per_s_per_n": 0.3,
+  "meaning": "Aggregate empirical effort/contact fit; effective duty is not a measured motor voltage or friction coefficient.",
+  "angular_calibration": "gyro rest-bias corrected; projected onto measured gravity; short-pulse and two-second trials",
+  "translation_calibrated": false,
+  "translation_note": "Short-burst IMU estimates only; independent distance reference is still required.",
+  "long_term_drift_calibrated": false,
+  "training_trial_count": 16,
+  "held_out_trial_count": 8,
+  "sensor": {
+    "gravity_g": [
+      -0.26318,
+      -0.14954,
+      0.95166
+    ],
+    "gyro_bias_dps": [
+      0.0,
+      0.7935,
+      0.0
+    ],
+    "gyro_sample_std_dps": [
+      0.04000641318588784,
+      0.040924557630352104,
+      0.04423741649056787
+    ],
+    "accel_sample_std_g": [
+      0.0006971781049344574,
+      0.0005385140324076973,
+      0.0006777381414676325
+    ],
+    "body_forward_axis_sensor": [
+      -0.9610008603507618,
+      0.12096562175526611,
+      -0.2486858756714128
+    ],
+    "forward_axis_launch_signal_g": 0.31303630310193514
+  },
+  "key_combinations": {
+    "": {
+      "forward": 0,
+      "turn": 0
+    },
+    "W": {
+      "forward": 1,
+      "turn": 0
+    },
+    "A": {
+      "forward": 0,
+      "turn": 1
+    },
+    "S": {
+      "forward": -1,
+      "turn": 0
+    },
+    "D": {
+      "forward": 0,
+      "turn": -1
+    },
+    "Q": {
+      "forward": 0,
+      "turn": 1
+    },
+    "E": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WA": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WS": {
+      "forward": 0,
+      "turn": 0
+    },
+    "WD": {
+      "forward": 1,
+      "turn": -1
+    },
+    "WQ": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WE": {
+      "forward": 1,
+      "turn": -1
+    },
+    "AS": {
+      "forward": -1,
+      "turn": 1
+    },
+    "AD": {
+      "forward": 0,
+      "turn": 0
+    },
+    "AQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "AE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "SD": {
+      "forward": -1,
+      "turn": -1
+    },
+    "SQ": {
+      "forward": -1,
+      "turn": 1
+    },
+    "SE": {
+      "forward": -1,
+      "turn": -1
+    },
+    "DQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "DE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "QE": {
+      "forward": 0,
+      "turn": 0
+    },
+    "WAS": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WAD": {
+      "forward": 1,
+      "turn": 0
+    },
+    "WAQ": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WAE": {
+      "forward": 1,
+      "turn": -1
+    },
+    "WSD": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WSQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WSE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WDQ": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WDE": {
+      "forward": 1,
+      "turn": -1
+    },
+    "WQE": {
+      "forward": 1,
+      "turn": 0
+    },
+    "ASD": {
+      "forward": -1,
+      "turn": 0
+    },
+    "ASQ": {
+      "forward": -1,
+      "turn": 1
+    },
+    "ASE": {
+      "forward": -1,
+      "turn": -1
+    },
+    "ADQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "ADE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "AQE": {
+      "forward": 0,
+      "turn": 1
+    },
+    "SDQ": {
+      "forward": -1,
+      "turn": 1
+    },
+    "SDE": {
+      "forward": -1,
+      "turn": -1
+    },
+    "SQE": {
+      "forward": -1,
+      "turn": 0
+    },
+    "DQE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WASD": {
+      "forward": 0,
+      "turn": 0
+    },
+    "WASQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WASE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WADQ": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WADE": {
+      "forward": 1,
+      "turn": -1
+    },
+    "WAQE": {
+      "forward": 1,
+      "turn": 1
+    },
+    "WSDQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WSDE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WSQE": {
+      "forward": 0,
+      "turn": 0
+    },
+    "WDQE": {
+      "forward": 1,
+      "turn": -1
+    },
+    "ASDQ": {
+      "forward": -1,
+      "turn": 1
+    },
+    "ASDE": {
+      "forward": -1,
+      "turn": -1
+    },
+    "ASQE": {
+      "forward": -1,
+      "turn": 1
+    },
+    "ADQE": {
+      "forward": 0,
+      "turn": 0
+    },
+    "SDQE": {
+      "forward": -1,
+      "turn": -1
+    },
+    "WASDQ": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WASDE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "WASQE": {
+      "forward": 0,
+      "turn": 1
+    },
+    "WADQE": {
+      "forward": 1,
+      "turn": 0
+    },
+    "WSDQE": {
+      "forward": 0,
+      "turn": -1
+    },
+    "ASDQE": {
+      "forward": -1,
+      "turn": 0
+    },
+    "WASDQE": {
+      "forward": 0,
+      "turn": 0
+    }
+  },
+  "pwm_map": [
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 600,
+      "effective_duty": 0.2602645773433562,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 800,
+      "effective_duty": 0.4380506439925211,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 1300,
+      "effective_duty": 0.6950593482543214,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "W",
+      "forward": 1,
+      "turn": 0,
+      "pwm": 1800,
+      "effective_duty": 0.9348424533630638,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 600,
+      "effective_duty": 0.305900779840838,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 800,
+      "effective_duty": 0.4657479606359432,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 1300,
+      "effective_duty": 0.7096281202287373,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "S",
+      "forward": -1,
+      "turn": 0,
+      "pwm": 1800,
+      "effective_duty": 0.9764460344200305,
+      "target_yaw_dps": 0.0,
+      "source": "UNVERIFIED short-burst accelerometer estimate; no external distance reference"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.06954773730117084,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 800,
+      "effective_duty": 0.09065939132710092,
+      "target_yaw_dps": 21.87638604033252,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 1300,
+      "effective_duty": 0.3152420573238144,
+      "target_yaw_dps": 86.81497957097042,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "pwm": 1800,
+      "effective_duty": 0.5559869638181433,
+      "target_yaw_dps": 155.724730010526,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": -0.5802758626325452,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 800,
+      "effective_duty": 0.12310260473523343,
+      "target_yaw_dps": -30.53015089112298,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 1300,
+      "effective_duty": 0.42249639966221103,
+      "target_yaw_dps": -117.27798073128716,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "pwm": 1800,
+      "effective_duty": 0.7078149496152178,
+      "target_yaw_dps": -200.3624575026106,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.2621743710163387,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 800,
+      "effective_duty": 0.04803455652207001,
+      "target_yaw_dps": 6.867806717795087,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 1300,
+      "effective_duty": 0.2938710065103592,
+      "target_yaw_dps": 42.05824264508217,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "pwm": 1800,
+      "effective_duty": 0.6079993951542778,
+      "target_yaw_dps": 84.57038698624115,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.01729089526136885,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 800,
+      "effective_duty": 0.0,
+      "target_yaw_dps": -1.584625563365612,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 1300,
+      "effective_duty": 0.5057099816162275,
+      "target_yaw_dps": -71.32374134315522,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "pwm": 1800,
+      "effective_duty": 0.712527751694577,
+      "target_yaw_dps": -99.66361750114541,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.06451329697925731,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 800,
+      "effective_duty": 0.11663939234257095,
+      "target_yaw_dps": 16.67752632594326,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 1300,
+      "effective_duty": 0.35584547666768784,
+      "target_yaw_dps": 50.91236785006877,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "pwm": 1800,
+      "effective_duty": 0.7287115167618363,
+      "target_yaw_dps": 102.26137023832169,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 0,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 500,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.0,
+      "source": "assumed below measured control range"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 600,
+      "effective_duty": 0.0,
+      "target_yaw_dps": 0.008758291787680365,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 800,
+      "effective_duty": 0.09380889831433302,
+      "target_yaw_dps": -13.412456129081145,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 1300,
+      "effective_duty": 0.424490778973068,
+      "target_yaw_dps": -60.26177920255725,
+      "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "pwm": 1800,
+      "effective_duty": 0.7804446185619178,
+      "target_yaw_dps": -110.56535922019708,
+      "source": "median of two held two-second floor trials; third repeat held out"
+    }
+  ],
+  "training_trials": [
+    {
+      "trial": 0,
+      "keys": "W",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1784.730574787,
+      "actual_drive_duration_s": 2.0326755539999795,
+      "yaw_plateau_dps": 1.9278911057972414,
+      "first_order": null,
+      "yaw_angle_deg": 1.2770596361195512,
+      "angular_coast_abs_deg": 1.521432130250221,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26306,
+        -0.14954,
+        0.9519
+      ],
+      "gravity_after_g": [
+        -0.26428,
+        -0.16455,
+        0.94922
+      ],
+      "baseline_gyro_std_dps": [
+        0.03816304300288002,
+        0.053168454389315854,
+        0.04669532006529134
+      ],
+      "baseline_gravity_change_g": 0.015296107347949672,
+      "short_burst_linear_mps_UNVERIFIED": 0.7389041817622006,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        1.4638010273806035,
+        -0.08870705083577665
+      ],
+      "zero_velocity_correction_mps": [
+        -0.06423921253444428,
+        0.1144717132461688
+      ],
+      "max_sample_gap_s": 0.022417370000084702
+    },
+    {
+      "trial": 1,
+      "keys": "S",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1790.023586969,
+      "actual_drive_duration_s": 2.0111018130000957,
+      "yaw_plateau_dps": -0.679786705354583,
+      "first_order": null,
+      "yaw_angle_deg": -3.6956671336169364,
+      "angular_coast_abs_deg": 2.56846100160508,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26434,
+        -0.16431,
+        0.94897
+      ],
+      "gravity_after_g": [
+        -0.26672,
+        -0.14282,
+        0.95154
+      ],
+      "baseline_gyro_std_dps": [
+        0.03999750971006919,
+        0.04611089710644969,
+        0.04422034912125905
+      ],
+      "baseline_gravity_change_g": 0.021773594099275404,
+      "short_burst_linear_mps_UNVERIFIED": -0.8132788073492176,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -1.6090979697897607,
+        0.09734748785243492
+      ],
+      "zero_velocity_correction_mps": [
+        -0.05031144873919977,
+        -0.19423731795151208
+      ],
+      "max_sample_gap_s": 0.020388778000096863
+    },
+    {
+      "trial": 2,
+      "keys": "Q",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1795.294824206,
+      "actual_drive_duration_s": 2.0228608700001587,
+      "yaw_plateau_dps": 166.16960846520155,
+      "first_order": {
+        "steady_dps": 168.9845428511348,
+        "delay_s": 0.02,
+        "time_constant_s": 0.10999999999999999,
+        "mse_dps2": 135.8299507073129
+      },
+      "yaw_angle_deg": 328.5071883458974,
+      "angular_coast_abs_deg": 9.281872760273526,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26672,
+        -0.14294,
+        0.9519
+      ],
+      "gravity_after_g": [
+        -0.26062,
+        -0.15515,
+        0.95154
+      ],
+      "baseline_gyro_std_dps": [
+        0.04605065123685922,
+        0.03619328662465204,
+        0.04931039238024998
+      ],
+      "baseline_gravity_change_g": 0.013653706456490115,
+      "short_burst_linear_mps_UNVERIFIED": 0.28731047151744976,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.10986423190469728,
+        -0.35072776893816426
+      ],
+      "zero_velocity_correction_mps": [
+        -0.04905760363167391,
+        -0.11232992158976209
+      ],
+      "max_sample_gap_s": 0.018815388999882998
+    },
+    {
+      "trial": 3,
+      "keys": "E",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1800.567679925,
+      "actual_drive_duration_s": 2.0125354249998963,
+      "yaw_plateau_dps": -201.6237534563252,
+      "first_order": {
+        "steady_dps": -202.31812987989093,
+        "delay_s": 0.02,
+        "time_constant_s": 0.09999999999999999,
+        "mse_dps2": 132.60576373305204
+      },
+      "yaw_angle_deg": -396.4504743691565,
+      "angular_coast_abs_deg": 14.51553434237395,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26086,
+        -0.15491,
+        0.95166
+      ],
+      "gravity_after_g": [
+        -0.26794,
+        -0.1405,
+        0.9516
+      ],
+      "baseline_gyro_std_dps": [
+        0.044814558750477504,
+        0.05016239471955062,
+        0.03800153976871711
+      ],
+      "baseline_gravity_change_g": 0.016055469473048735,
+      "short_burst_linear_mps_UNVERIFIED": 0.026839830960867856,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.08328133283141942,
+        -0.1134071069497033
+      ],
+      "zero_velocity_correction_mps": [
+        -0.04544695344343599,
+        -0.24520581949563988
+      ],
+      "max_sample_gap_s": 0.01536931500004357
+    },
+    {
+      "trial": 4,
+      "keys": "WA",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1805.830608015,
+      "actual_drive_duration_s": 2.0225505910000265,
+      "yaw_plateau_dps": 85.59289929160892,
+      "first_order": {
+        "steady_dps": 85.59116074265071,
+        "delay_s": 0.02,
+        "time_constant_s": 0.15999999999999998,
+        "mse_dps2": 25.44478270169736
+      },
+      "yaw_angle_deg": 163.63197010487957,
+      "angular_coast_abs_deg": 6.238339496393001,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.8545,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26794,
+        -0.1405,
+        0.9519
+      ],
+      "gravity_after_g": [
+        -0.2641,
+        -0.16052,
+        0.94995
+      ],
+      "baseline_gyro_std_dps": [
+        0.04173933729332498,
+        0.05184656243535955,
+        0.04273360363155492
+      ],
+      "baseline_gravity_change_g": 0.020478000390663133,
+      "short_burst_linear_mps_UNVERIFIED": 0.32757948593308794,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.3082186073485893,
+        0.4201112887309184
+      ],
+      "zero_velocity_correction_mps": [
+        -0.05707133916156405,
+        -0.25783611648281096
+      ],
+      "max_sample_gap_s": 0.016203222000058304
+    },
+    {
+      "trial": 5,
+      "keys": "SD",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1811.113346493,
+      "actual_drive_duration_s": 2.0123847209999894,
+      "yaw_plateau_dps": -109.85802851716798,
+      "first_order": {
+        "steady_dps": -115.90666272598217,
+        "delay_s": 0.03,
+        "time_constant_s": 0.13999999999999999,
+        "mse_dps2": 70.97282352881604
+      },
+      "yaw_angle_deg": -223.2240710732406,
+      "angular_coast_abs_deg": 10.618994648663167,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.2644,
+        -0.1604,
+        0.94983
+      ],
+      "gravity_after_g": [
+        -0.27588,
+        -0.13892,
+        0.94971
+      ],
+      "baseline_gyro_std_dps": [
+        0.03605103939309259,
+        0.04568029772232224,
+        0.04253172684514177
+      ],
+      "baseline_gravity_change_g": 0.024355598945622333,
+      "short_burst_linear_mps_UNVERIFIED": -0.2511039989085676,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.27861108002004775,
+        0.32688560405231265
+      ],
+      "zero_velocity_correction_mps": [
+        -0.07008987541755447,
+        0.2776168049652285
+      ],
+      "max_sample_gap_s": 0.018034204000059617
+    },
+    {
+      "trial": 6,
+      "keys": "WD",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1816.386408546,
+      "actual_drive_duration_s": 2.03248323899993,
+      "yaw_plateau_dps": -100.15597124777481,
+      "first_order": {
+        "steady_dps": -102.09601424802108,
+        "delay_s": 0.04,
+        "time_constant_s": 0.09999999999999999,
+        "mse_dps2": 56.96272182238355
+      },
+      "yaw_angle_deg": -198.94010320976625,
+      "angular_coast_abs_deg": 6.23687199831519,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.27551,
+        -0.13904,
+        0.94958
+      ],
+      "gravity_after_g": [
+        -0.26172,
+        -0.15137,
+        0.9519
+      ],
+      "baseline_gyro_std_dps": [
+        0.03782151154110278,
+        0.04093167677972648,
+        0.04813000265946389
+      ],
+      "baseline_gravity_change_g": 0.018643374158129188,
+      "short_burst_linear_mps_UNVERIFIED": 0.17769482684513296,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.23426640160507123,
+        -0.15274500600304824
+      ],
+      "zero_velocity_correction_mps": [
+        0.1502692504786498,
+        -0.12647273409667906
+      ],
+      "max_sample_gap_s": 0.020211093000170877
+    },
+    {
+      "trial": 7,
+      "keys": "SA",
+      "pwm": 1800,
+      "repeat": 0,
+      "actual_start_s": 1821.678910839,
+      "actual_drive_duration_s": 2.012568146999911,
+      "yaw_plateau_dps": 99.37638073932061,
+      "first_order": {
+        "steady_dps": 95.05314755427389,
+        "delay_s": 0.01,
+        "time_constant_s": 0.15999999999999998,
+        "mse_dps2": 83.41974998313871
+      },
+      "yaw_angle_deg": 184.88108022370585,
+      "angular_coast_abs_deg": 9.816683859593127,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26172,
+        -0.15161,
+        0.95215
+      ],
+      "gravity_after_g": [
+        -0.27393,
+        -0.14661,
+        0.94885
+      ],
+      "baseline_gyro_std_dps": [
+        0.03462594193008263,
+        0.045155762169881014,
+        0.048818186896901705
+      ],
+      "baseline_gravity_change_g": 0.013600518372473917,
+      "short_burst_linear_mps_UNVERIFIED": -0.2382787992557321,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.16994881377543275,
+        -0.19400313154543816
+      ],
+      "zero_velocity_correction_mps": [
+        -0.106054744610867,
+        -0.026843258784511225
+      ],
+      "max_sample_gap_s": 0.01666501799991238
+    },
+    {
+      "trial": 8,
+      "keys": "W",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1826.963078817,
+      "actual_drive_duration_s": 2.011310739999999,
+      "yaw_plateau_dps": -0.612984317880306,
+      "first_order": null,
+      "yaw_angle_deg": 1.8873591113896968,
+      "angular_coast_abs_deg": 2.1873792180096685,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.27405,
+        -0.14636,
+        0.94885
+      ],
+      "gravity_after_g": [
+        -0.26013,
+        -0.15881,
+        0.95105
+      ],
+      "baseline_gyro_std_dps": [
+        0.04903060608634675,
+        0.05050094114198836,
+        0.039373689835214463
+      ],
+      "baseline_gravity_change_g": 0.018804491484749105,
+      "short_burst_linear_mps_UNVERIFIED": 0.815202323805116,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        1.6259236221340183,
+        0.07696322739383082
+      ],
+      "zero_velocity_correction_mps": [
+        -0.07695414924739483,
+        0.1553160397918707
+      ],
+      "max_sample_gap_s": 0.015714128999889
+    },
+    {
+      "trial": 9,
+      "keys": "S",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1832.249511036,
+      "actual_drive_duration_s": 2.0078377949998867,
+      "yaw_plateau_dps": -0.9118012067290151,
+      "first_order": null,
+      "yaw_angle_deg": -4.081708314320845,
+      "angular_coast_abs_deg": 3.9980467094043974,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.8545,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26031499999999996,
+        -0.15906,
+        0.95129
+      ],
+      "gravity_after_g": [
+        -0.27539,
+        -0.14587,
+        0.94849
+      ],
+      "baseline_gyro_std_dps": [
+        0.051797170617708437,
+        0.03602438303204522,
+        0.038622762253111266
+      ],
+      "baseline_gravity_change_g": 0.020225521624917406,
+      "short_burst_linear_mps_UNVERIFIED": -0.8099905777417342,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -1.549269026002792,
+        0.0012291352087244899
+      ],
+      "zero_velocity_correction_mps": [
+        0.19660178291161234,
+        -0.12112780697890192
+      ],
+      "max_sample_gap_s": 0.019703018999962296
+    },
+    {
+      "trial": 10,
+      "keys": "Q",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1837.538812903,
+      "actual_drive_duration_s": 2.0112298139999893,
+      "yaw_plateau_dps": 145.27985155585043,
+      "first_order": {
+        "steady_dps": 156.0816780773557,
+        "delay_s": 0.02,
+        "time_constant_s": 0.06,
+        "mse_dps2": 409.6231860660137
+      },
+      "yaw_angle_deg": 308.05144111095467,
+      "angular_coast_abs_deg": 7.268800449054964,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.27563,
+        -0.146,
+        0.94873
+      ],
+      "gravity_after_g": [
+        -0.26471,
+        -0.15955,
+        0.94971
+      ],
+      "baseline_gyro_std_dps": [
+        0.051547844339021584,
+        0.03862027156818035,
+        0.048570265348256036
+      ],
+      "baseline_gravity_change_g": 0.01743012621870536,
+      "short_burst_linear_mps_UNVERIFIED": 0.21350823574927974,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.029699181913650643,
+        -0.25034230974684163
+      ],
+      "zero_velocity_correction_mps": [
+        0.1402836928167294,
+        0.09630386028615578
+      ],
+      "max_sample_gap_s": 0.01723742600006517
+    },
+    {
+      "trial": 11,
+      "keys": "E",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1842.820363122,
+      "actual_drive_duration_s": 2.0229211289999967,
+      "yaw_plateau_dps": -199.10116154889602,
+      "first_order": {
+        "steady_dps": -191.2602536129067,
+        "delay_s": 0.01,
+        "time_constant_s": 0.11999999999999998,
+        "mse_dps2": 259.2437012767208
+      },
+      "yaw_angle_deg": -376.67711926813104,
+      "angular_coast_abs_deg": 15.128392159611447,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26489,
+        -0.15955,
+        0.94983
+      ],
+      "gravity_after_g": [
+        -0.27014,
+        -0.15295,
+        0.94916
+      ],
+      "baseline_gyro_std_dps": [
+        0.045346773909507615,
+        0.03870053349589564,
+        0.03964983908377182
+      ],
+      "baseline_gravity_change_g": 0.00845998817966075,
+      "short_burst_linear_mps_UNVERIFIED": -0.050147998379909235,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.10869633787976668,
+        -0.12783920279083366
+      ],
+      "zero_velocity_correction_mps": [
+        -0.03914311683314438,
+        -0.06987535033463928
+      ],
+      "max_sample_gap_s": 0.019948333000002094
+    },
+    {
+      "trial": 12,
+      "keys": "WA",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1848.103454156,
+      "actual_drive_duration_s": 2.022380683999927,
+      "yaw_plateau_dps": 83.54787468087339,
+      "first_order": {
+        "steady_dps": 84.20719916176003,
+        "delay_s": 0.01,
+        "time_constant_s": 0.21999999999999997,
+        "mse_dps2": 10.592623062911693
+      },
+      "yaw_angle_deg": 156.34681088267268,
+      "angular_coast_abs_deg": 5.976970649452662,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.2699,
+        -0.15308,
+        0.94922
+      ],
+      "gravity_after_g": [
+        -0.26636,
+        -0.15015,
+        0.95081
+      ],
+      "baseline_gyro_std_dps": [
+        0.038992413415945434,
+        0.04044488705496517,
+        0.04918920190448305
+      ],
+      "baseline_gravity_change_g": 0.004862571336237663,
+      "short_burst_linear_mps_UNVERIFIED": 0.2737782987690742,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.1825259855666881,
+        0.396818551055389
+      ],
+      "zero_velocity_correction_mps": [
+        0.08436582002871236,
+        0.021967449847137967
+      ],
+      "max_sample_gap_s": 0.014917186000047877
+    },
+    {
+      "trial": 13,
+      "keys": "SD",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1853.390331838,
+      "actual_drive_duration_s": 2.008277592000013,
+      "yaw_plateau_dps": -111.2726899232262,
+      "first_order": {
+        "steady_dps": -109.95072059078376,
+        "delay_s": 0.03,
+        "time_constant_s": 0.14999999999999997,
+        "mse_dps2": 62.2840074438002
+      },
+      "yaw_angle_deg": -206.80112526561754,
+      "angular_coast_abs_deg": 6.381950098059963,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.8545,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26636,
+        -0.15002,
+        0.95068
+      ],
+      "gravity_after_g": [
+        -0.26587,
+        -0.1499,
+        0.95093
+      ],
+      "baseline_gyro_std_dps": [
+        0.03804312411674394,
+        0.044609152824308156,
+        0.049305973822098434
+      ],
+      "baseline_gravity_change_g": 0.0005630275304103947,
+      "short_burst_linear_mps_UNVERIFIED": -0.2806884125389899,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.28010042325666107,
+        0.32566860703787603
+      ],
+      "zero_velocity_correction_mps": [
+        -0.08043735767045676,
+        -0.03284545391357511
+      ],
+      "max_sample_gap_s": 0.01697420300001795
+    },
+    {
+      "trial": 14,
+      "keys": "WD",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1858.686164706,
+      "actual_drive_duration_s": 2.01536331300008,
+      "yaw_plateau_dps": -99.17126375451599,
+      "first_order": {
+        "steady_dps": -98.70845149330347,
+        "delay_s": 0.03,
+        "time_constant_s": 0.06999999999999999,
+        "mse_dps2": 79.27536886406733
+      },
+      "yaw_angle_deg": -194.6677393903469,
+      "angular_coast_abs_deg": 5.115182913538831,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        -0.061,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.2655,
+        -0.15002,
+        0.95093
+      ],
+      "gravity_after_g": [
+        -0.26746,
+        -0.14893,
+        0.950745
+      ],
+      "baseline_gyro_std_dps": [
+        0.0425473293638978,
+        0.042083906852857664,
+        0.052924045990456935
+      ],
+      "baseline_gravity_change_g": 0.0022503166443858173,
+      "short_burst_linear_mps_UNVERIFIED": 0.23517351167979744,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.27198452582600896,
+        -0.21964773073347063
+      ],
+      "zero_velocity_correction_mps": [
+        -0.04027453293142352,
+        0.05581800550982303
+      ],
+      "max_sample_gap_s": 0.018782074000000648
+    },
+    {
+      "trial": 15,
+      "keys": "SA",
+      "pwm": 1800,
+      "repeat": 1,
+      "actual_start_s": 1863.982082888,
+      "actual_drive_duration_s": 2.0123055910000858,
+      "yaw_plateau_dps": 105.14635973732277,
+      "first_order": {
+        "steady_dps": 107.25151517376463,
+        "delay_s": 0.01,
+        "time_constant_s": 0.17999999999999997,
+        "mse_dps2": 40.02861369857683
+      },
+      "yaw_angle_deg": 204.072186449013,
+      "angular_coast_abs_deg": 12.02687665297432,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        -0.8545,
+        0.4272,
+        -1.1597
+      ],
+      "gravity_before_g": [
+        -0.26733,
+        -0.14929,
+        0.95081
+      ],
+      "gravity_after_g": [
+        -0.26697,
+        -0.11389,
+        0.95483
+      ],
+      "baseline_gyro_std_dps": [
+        3.2086173228196295,
+        1.5617569881453466,
+        2.5653054932053196
+      ],
+      "baseline_gravity_change_g": 0.03562934184067956,
+      "short_burst_linear_mps_UNVERIFIED": -0.003630492518786072,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.4913365164025092,
+        -0.4774746426388506
+      ],
+      "zero_velocity_correction_mps": [
+        0.07565526164811569,
+        -0.3304580769180758
+      ],
+      "max_sample_gap_s": 0.01903909299994666
+    }
+  ],
+  "held_out_trials": [
+    {
+      "trial": 16,
+      "keys": "W",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2138.642730076,
+      "actual_drive_duration_s": 2.0114468130000205,
+      "yaw_plateau_dps": 0.1061261141631914,
+      "first_order": null,
+      "yaw_angle_deg": 2.8656989396317454,
+      "angular_coast_abs_deg": 3.291643460754574,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26575,
+        -0.15845,
+        0.95032
+      ],
+      "gravity_after_g": [
+        -0.25635,
+        -0.14514,
+        0.95471
+      ],
+      "baseline_gyro_std_dps": [
+        0.04386612141806549,
+        0.04143011297543157,
+        0.0433127410109808
+      ],
+      "baseline_gravity_change_g": 0.01687566887563272,
+      "short_burst_linear_mps_UNVERIFIED": 0.8469755020694802,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        1.683390907500869,
+        0.040524960282702464
+      ],
+      "zero_velocity_correction_mps": [
+        0.042457856305854,
+        -0.1550519807467845
+      ],
+      "max_sample_gap_s": 0.015646611000192934
+    },
+    {
+      "trial": 17,
+      "keys": "S",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2143.914396128,
+      "actual_drive_duration_s": 2.0126145730000644,
+      "yaw_plateau_dps": -1.0087262996239827,
+      "first_order": null,
+      "yaw_angle_deg": 1.6169714651551446,
+      "angular_coast_abs_deg": 2.240192467326134,
+      "gyro_bias_before_dps": [
+        -0.061,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.25647,
+        -0.14502,
+        0.95447
+      ],
+      "gravity_after_g": [
+        -0.27173,
+        -0.13879,
+        0.95117
+      ],
+      "baseline_gyro_std_dps": [
+        0.041597813253485875,
+        0.042652071270613205,
+        0.04919329847526017
+      ],
+      "baseline_gravity_change_g": 0.016809833431655482,
+      "short_burst_linear_mps_UNVERIFIED": -0.8010702492485162,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -1.5219402971906832,
+        0.01361295748700348
+      ],
+      "zero_velocity_correction_mps": [
+        0.19105306226645827,
+        0.043091044122049525
+      ],
+      "max_sample_gap_s": 0.016257018000032986
+    },
+    {
+      "trial": 18,
+      "keys": "Q",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2149.187165366,
+      "actual_drive_duration_s": 2.022617239000283,
+      "yaw_plateau_dps": 142.21826001826454,
+      "first_order": {
+        "steady_dps": 160.29046464701554,
+        "delay_s": 0.04,
+        "time_constant_s": 0.06,
+        "mse_dps2": 394.11435181792814
+      },
+      "yaw_angle_deg": 314.5347679431339,
+      "angular_coast_abs_deg": 6.123049543139348,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.27173,
+        -0.13892,
+        0.95117
+      ],
+      "gravity_after_g": [
+        -0.26764,
+        -0.15936,
+        0.9491
+      ],
+      "baseline_gyro_std_dps": [
+        0.04273780512353036,
+        0.041740200095351704,
+        0.046192838556255625
+      ],
+      "baseline_gravity_change_g": 0.02094771109214562,
+      "short_burst_linear_mps_UNVERIFIED": 0.3075234691144294,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.1875674624870355,
+        -0.3448861955547668
+      ],
+      "zero_velocity_correction_mps": [
+        0.09972300139210717,
+        0.020539171307760846
+      ],
+      "max_sample_gap_s": 0.019105259000298247
+    },
+    {
+      "trial": 19,
+      "keys": "E",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2154.472166048,
+      "actual_drive_duration_s": 2.0203076840002723,
+      "yaw_plateau_dps": -206.75282632645954,
+      "first_order": {
+        "steady_dps": -203.39417517571871,
+        "delay_s": 0.01,
+        "time_constant_s": 0.15999999999999998,
+        "mse_dps2": 163.43842287286128
+      },
+      "yaw_angle_deg": -388.47309901041575,
+      "angular_coast_abs_deg": 13.021416231597156,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.8545,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26758,
+        -0.15955,
+        0.94897
+      ],
+      "gravity_after_g": [
+        -0.27417,
+        -0.14563,
+        0.9491
+      ],
+      "baseline_gyro_std_dps": [
+        0.03311141904885037,
+        0.03786725534579275,
+        0.04773905425460931
+      ],
+      "baseline_gravity_change_g": 0.01540166874075664,
+      "short_burst_linear_mps_UNVERIFIED": 0.07422762894590136,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        0.15459720052145243,
+        0.011652853290565902
+      ],
+      "zero_velocity_correction_mps": [
+        0.24851231668798723,
+        -0.13675278203595195
+      ],
+      "max_sample_gap_s": 0.018406628999855457
+    },
+    {
+      "trial": 20,
+      "keys": "WA",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2159.746108748,
+      "actual_drive_duration_s": 2.009435018000204,
+      "yaw_plateau_dps": 82.1749697462056,
+      "first_order": {
+        "steady_dps": 84.56965219963037,
+        "delay_s": 0.03,
+        "time_constant_s": 0.14999999999999997,
+        "mse_dps2": 14.6326450130801
+      },
+      "yaw_angle_deg": 159.43984040678995,
+      "angular_coast_abs_deg": 5.074404105769471,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.8240000000000001,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.27393,
+        -0.14526,
+        0.9491
+      ],
+      "gravity_after_g": [
+        -0.2569,
+        -0.155335,
+        0.95276
+      ],
+      "baseline_gyro_std_dps": [
+        0.03974199435990197,
+        0.04780237609502877,
+        0.04417400581883699
+      ],
+      "baseline_gravity_change_g": 0.02012267688454992,
+      "short_burst_linear_mps_UNVERIFIED": 0.2921068825728502,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.1895834783507876,
+        0.42040771560363377
+      ],
+      "zero_velocity_correction_mps": [
+        0.19228427639310086,
+        -0.13095147614800573
+      ],
+      "max_sample_gap_s": 0.01586838799994439
+    },
+    {
+      "trial": 21,
+      "keys": "SD",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2165.028110356,
+      "actual_drive_duration_s": 2.0101304990002973,
+      "yaw_plateau_dps": -112.23768142097866,
+      "first_order": {
+        "steady_dps": -112.03468408421213,
+        "delay_s": 0.01,
+        "time_constant_s": 0.18999999999999997,
+        "mse_dps2": 27.92076824650998
+      },
+      "yaw_angle_deg": -211.04708237144118,
+      "angular_coast_abs_deg": 9.62738964700319,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        -0.061
+      ],
+      "gravity_before_g": [
+        -0.25708,
+        -0.15515,
+        0.95288
+      ],
+      "gravity_after_g": [
+        -0.26953,
+        -0.14539,
+        0.95068
+      ],
+      "baseline_gyro_std_dps": [
+        0.03449962424871886,
+        0.04445673429852665,
+        0.04315961817859739
+      ],
+      "baseline_gravity_change_g": 0.01597185336772163,
+      "short_burst_linear_mps_UNVERIFIED": -0.2982168625662489,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.21972954462442745,
+        0.18072889406193718
+      ],
+      "zero_velocity_correction_mps": [
+        -0.19200791215096527,
+        -0.034737689965411836
+      ],
+      "max_sample_gap_s": 0.018340093000006163
+    },
+    {
+      "trial": 22,
+      "keys": "WD",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2170.298619687,
+      "actual_drive_duration_s": 2.0226227020002625,
+      "yaw_plateau_dps": -94.63749329078686,
+      "first_order": {
+        "steady_dps": -95.16842769404663,
+        "delay_s": 0.05,
+        "time_constant_s": 0.09999999999999999,
+        "mse_dps2": 66.0822807761263
+      },
+      "yaw_angle_deg": -182.74386317441054,
+      "angular_coast_abs_deg": 5.036941272850169,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26929,
+        -0.14539,
+        0.95081
+      ],
+      "gravity_after_g": [
+        -0.26306,
+        -0.14978,
+        0.95166
+      ],
+      "baseline_gyro_std_dps": [
+        0.038981513682722124,
+        0.05232619567532652,
+        0.04558067455122589
+      ],
+      "baseline_gravity_change_g": 0.007668604827476727,
+      "short_burst_linear_mps_UNVERIFIED": 0.2129456762986624,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.3227368649504991,
+        -0.15345816111856259
+      ],
+      "zero_velocity_correction_mps": [
+        0.01860940084607201,
+        0.03494386653082245
+      ],
+      "max_sample_gap_s": 0.017954814999939117
+    },
+    {
+      "trial": 23,
+      "keys": "SA",
+      "pwm": 1800,
+      "repeat": 2,
+      "actual_start_s": 2175.571608165,
+      "actual_drive_duration_s": 2.0224040730004162,
+      "yaw_plateau_dps": 82.5900176704619,
+      "first_order": {
+        "steady_dps": 84.71078095553595,
+        "delay_s": 0.01,
+        "time_constant_s": 0.15999999999999998,
+        "mse_dps2": 86.09030186246181
+      },
+      "yaw_angle_deg": 162.75408888915936,
+      "angular_coast_abs_deg": 5.551578895412019,
+      "gyro_bias_before_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gyro_bias_after_dps": [
+        0.0,
+        0.7935,
+        0.0
+      ],
+      "gravity_before_g": [
+        -0.26343,
+        -0.1499,
+        0.9519
+      ],
+      "gravity_after_g": [
+        -0.26416,
+        -0.15625,
+        0.95056
+      ],
+      "baseline_gyro_std_dps": [
+        0.03865202679476985,
+        0.03426891302623998,
+        0.05301110804359778
+      ],
+      "baseline_gravity_change_g": 0.006530773307962845,
+      "short_burst_linear_mps_UNVERIFIED": -0.07421026792453804,
+      "short_burst_displacement_xy_m_UNVERIFIED": [
+        -0.29594307799443925,
+        -0.0415260221560607
+      ],
+      "zero_velocity_correction_mps": [
+        -0.005501543275668625,
+        -0.01846156898001022
+      ],
+      "max_sample_gap_s": 0.018585980999887397
+    }
+  ],
+  "source_sessions": [
+    "2026-10-17-floor-01",
+    "2026-10-17-floor-long-01",
+    "2026-10-17-floor-long-03"
+  ]
+}

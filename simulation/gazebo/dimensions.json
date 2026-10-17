@@ -6,7 +6,5 @@
   "wheel_diameter_in": 2.5,
   "motor_bottom_clearance_in": 1.0,
   "main_board_height_in": 1.75,
-  "board_thickness_mm_assumed": 1.6,
-  "chassis_mass_kg_placeholder": 0.8,
-  "wheel_mass_kg_placeholder": 0.05
+  "board_thickness_mm_assumed": 1.6
 }

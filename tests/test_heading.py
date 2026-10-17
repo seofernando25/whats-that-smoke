@@ -1,4 +1,4 @@
-from whats_that_smoke.heading import RelativeHeading
+from ugv.heading import RelativeHeading
 
 
 def calibrated_heading():

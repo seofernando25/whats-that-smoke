@@ -1,6 +1,14 @@
-# whats-that-smoke
+# UGV
 
-`WTS := FNK0043/Freenove-4WD control+observe repo`
+`UGV := FNK0043/Freenove-4WD control+observe repo`
+
+Canonical repository: https://github.com/uOAeronautics/ugv. Local checkout:
+`~/Projects/ugv`; Pi checkout: `/home/advanced/ugv`. Connect with `ssh advanced`.
+The Pi runs `ugv-dashboard.service`; commands are `uv run ugv` and
+`uv run ugv-dashboard`. See [dynamics calibration](docs/DYNAMICS.md) for measured
+keyboard responses, sensor drift treatment and the Gazebo fit.
+
+The initial audit below is historical; current observations are in `docs/STATE.md`.
 
 ## ∆0
 
@@ -29,8 +37,8 @@ docs/DASHBOARD.md -> WebSocket control/state/dead-man contract
 
 ```text
 env  := uv sync
-run  := uv run wts --help
-dash := uv run wts-dashboard # http://192.168.8.170:8765
+run  := uv run ugv --help
+dash := uv run ugv-dashboard # http://192.168.8.170:8765
 
 deploy := Pi-local hardware service; source mirror=GitHub
 cloud-runtime := ∅ by design; GPIO/I2C/camera live on Pi
@@ -52,3 +60,7 @@ Drone parking observation and prototype: [docs/PARKING.md](docs/PARKING.md). Ope
 See [simulation/gazebo/README.md](simulation/gazebo/README.md) for the photo-informed
 Freenove model, editable dimensions, close camera configuration, bounded drive
 demo, and Blender preview renderer. The simulation has no hardware connection.
+
+For local WASD/QE keyboard controls, open
+`simulation/gazebo/launch_control.command` or run it from Terminal. It opens a
+browser console at `http://127.0.0.1:8767` alongside Gazebo.

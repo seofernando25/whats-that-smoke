@@ -86,7 +86,7 @@ edge gate := native/refined and fallback corners>=3px from image edge; do not ac
 regression := retained ID0 marker-only crop, brightness±12; 50 IDs×4 rotations curved; 569 invalid random codes + blanks rejected; stale-camera/track-expiry tests retained
 tracking TTL := unchanged; no longer visual hold; current identity comes from fresh code reads, not forced expected ID
 pose := remains approximate planar pose; curling is corrected for identity extraction, not calibrated 3D shape
-rollback := /home/advanced/wts-curved-tag-backup-WzCwZj/{aruco.py,test_aruco.py,ARUCO.md,STATE.md}; new fixture=tests/fixtures/curled-id0.png
+rollback := /home/advanced/ugv-curved-tag-backup-WzCwZj/{aruco.py,test_aruco.py,ARUCO.md,STATE.md}; new fixture=tests/fixtures/curled-id0.png
 ```
 
 ## Capture continuity · 2026-10-13
@@ -99,5 +99,5 @@ verification := original visible ID0 stayed target-reached at268/268 polls over3
 edge correction := later rejected incidental clipped native candidate; native/fallback border regression passed
 final := source matches tested candidate; service active, current capture30fps/fresh; human accepted goal complete and ended extra tests
 scope := no claim of detection through physical occlusion or camera outage; stale frames still clear overlays; user-operated multi-tag/follow trials are separate from the stationary verification
-rollback includes := /home/advanced/wts-curved-tag-backup-WzCwZj/web.py; new regression=tests/test_camera.py
+rollback includes := /home/advanced/ugv-curved-tag-backup-WzCwZj/web.py; new regression=tests/test_camera.py
 ```

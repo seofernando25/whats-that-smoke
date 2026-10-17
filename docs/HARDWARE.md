@@ -1,5 +1,15 @@
 # HARDWARE
 
+## Current measured envelope and mass (2026-10-17)
+
+Total mass: **577.4 g**. Sketch dimensions confirmed in inches: 7.5 × 3.75 in
+main PCB, 8 × 5.75 in tire envelope, 2.5 in wheel diameter. Symmetric axle
+placement implies 139.7 mm wheelbase and 120.65 mm wheel-center track. Motor
+bottom clearance is 1 in; the main board top is 1.75 in above the floor.
+The camera extends beyond the tire envelope. Component weights and LiPo
+placement are estimates recorded in `simulation/gazebo/mass_distribution.json`.
+Older snapshots below retain their observation dates.
+
 ## graph
 
 ```text

@@ -11,7 +11,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from whats_that_smoke.aruco import ArucoFollower
+from ugv.aruco import ArucoFollower
 
 
 def main():

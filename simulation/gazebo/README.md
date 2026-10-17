@@ -1,4 +1,13 @@
-# Freenove photo-informed model
+# UGV Gazebo simulation
+
+The local drive console now uses the real car's 500–1800 PWM scale, matching
+WASDQE mixing and combined inputs. The real-car effort/contact fit comes from
+116 floor trials; see [dynamics calibration](../../docs/DYNAMICS.md) and
+`real_robot_profile.json`. Turn response is gyro-measured; translation remains
+a provisional short-burst inertial estimate. Release or command expiry brakes
+the simulated car. This console has no connection to real hardware.
+
+## Freenove photo-informed model
 
 Revised 2026-10-17 from the user's four photographs and explicit correction:
 **1 inch is the motor-bottom ground clearance; 1.75 inches is the main board
@@ -6,7 +15,7 @@ height.** The old solid chassis envelope was incorrect and has been removed.
 
 The visual assembly includes a thin black main PCB, four yellow TT gearmotors
 with silver cans, black treaded tires and yellow spoke hubs, an underside
-empty two-cell battery holder, a raised green Raspberry Pi, a blue Nano on
+estimated low central LiPo battery, a raised green Raspberry Pi, a blue Nano on
 headers, a front servo/horn, a lower forward-facing camera, an orange ribbon,
 and approximate screws, switches, LEDs and connectors. It represents the
 photographed configuration, with no ultrasonic turret attached. Loose cables
@@ -24,7 +33,7 @@ outside the car are omitted.
 
 The board thickness is provisionally 1.6mm; the 1.75in reference is interpreted
 as its top surface. The heights no longer define a 0.75in thick chassis block.
-Motor housings reach down to 25.4mm. The battery holder and camera can extend
+Motor housings reach down to 25.4mm. The battery pack and camera can extend
 below the motor bottoms; the 1in measurement is not a universal clearance.
 
 Assumptions retained from the original sketch: symmetric axles, overall length
@@ -51,6 +60,8 @@ Edit `dimensions.json`, then use Python 3:
 cd simulation/gazebo  # from the repository root
 python3 generate.py
 gz sdf -k freenove_world.sdf
+python3 build_motor_plugin.py
+export GZ_SIM_SYSTEM_PLUGIN_PATH="$PWD/plugins/build:$GZ_SIM_SYSTEM_PLUGIN_PATH"
 gz sim -r --gui-config car_gui.config freenove_world.sdf
 ```
 
@@ -81,9 +92,43 @@ and turning velocity, then a zero velocity when the duration ends or it is
 interrupted with Ctrl+C. The simulation must already be running. The GUI's
 pause control can pause the whole simulation at any time.
 
+## Local keyboard control panel
+
+Open `launch_control.command` in Finder, or from the repository root run:
+
+```sh
+./simulation/gazebo/launch_control.command
+```
+
+This opens a local browser panel at `http://127.0.0.1:8767`. Keep the panel
+focused beside the Gazebo window. Hold W/S for forward/reverse, A/D for steering,
+or Q/E to pivot; release to stop. W+A and W+D make curved turns. This mapping
+matches the existing car dashboard; the four-wheel model cannot strafe.
+Space, Escape and the Stop button release all controls. The panel also has
+pointer/touch buttons, a 0.03–0.30 m/s speed slider, live world-position map,
+and Open Gazebo / Play / Pause / Reset buttons. Reset stops the car and leaves
+the world paused; click Play before driving again.
+
+The launcher uses the installed Gazebo Python bindings and creates an ignored
+`.control-venv` with the matching Protobuf runtime using `uv`. On this Mac,
+Gazebo's Homebrew Python 3.15 bindings require Protobuf 7.36.2 or later.
+It does not install the Raspberry Pi package or import its hardware services.
+Native Gazebo Transport publishes velocity at 20Hz; expired browser heartbeats
+(400ms), blur, a hidden tab, key release, pause and server shutdown stop motion.
+The HTTP server binds only to loopback. Stop other demo publishers before using
+the panel, since Gazebo does not arbitrate multiple velocity publishers.
+
+Controller checks (standard library only):
+
+```sh
+python3 -m unittest discover -s simulation/gazebo -p test_controls.py
+```
+
 `assembly.py` defines the parts used by both SDF generation and the Blender
-preview. The Gazebo model has five rigid links, four revolute wheel joints,
-visual-only tread and details, and simplified component collisions.
+preview. The Gazebo model has four torque-driven wheel joints, four small equivalent
+radial tire springs, visual-only tread, and simplified component collisions.
+See [MOTOR_MODEL.md](MOTOR_MODEL.md) for the reference TT motor specs, torque-speed
+model, rubber-contact assumptions, native plugin build and validation details.
 All electronics and motors are rigidly attached to the chassis; the servo and
 camera are visual approximations, not articulated sensor systems.
 
@@ -95,16 +140,24 @@ blender -b --python render_blender.py -- /absolute/path/to/output-folder
 
 The output folder defaults to `preview/` beside the script when omitted.
 
-Requires modern Gazebo Sim with Physics, UserCommands, SceneBroadcaster and
-DiffDrive systems. The controller uses both left joints and both right joints;
-see the [official DiffDrive reference](https://gazebosim.org/api/sim/10/classgz_1_1sim_1_1systems_1_1DiffDrive.html).
+Requires Gazebo Sim 10 with Physics, UserCommands, SceneBroadcaster and
+OdometryPublisher systems, plus the local `ugv_tt_motor` plugin. CMake and a C++17
+compiler are needed for the first plugin build. The controller applies bounded
+DC motor torque to each wheel; it no longer uses ideal DiffDrive actuation.
 
 Simulation-only velocity: `/model/freenove/cmd_vel` (`gz.msgs.Twist`).
-Odometry: `/model/freenove/odometry`. No timeout is configured; send a zero Twist
+Odometry: `/model/freenove/odometry`. A 400 ms timeout is configured; send a zero Twist
 to stop after experimenting. This model has no connection to real hardware.
 
-Masses (0.8kg rigid assembly, 0.05kg per wheel), chassis center of mass,
-bounding-box chassis inertia and contact properties remain placeholders.
+Total mass is measured at **577.4 g**. `mass_distribution.json` assigns estimated
+component masses and positions: 190 g LiPo, 122.4 g motors, 128 g wheels,
+133 g boards/electronics/wiring and 4 g mounting carriers. The rigid link is
+445.4 g. `mass_properties.py` computes its center of mass and full inertia tensor
+using component envelopes and the parallel-axis theorem; wheel inertia combines
+an annular rubber tire (20 g) and plastic hub (12 g). The nominal full assembly
+center of mass is (-2.70, 0.026, 36.39) mm relative to the ground-level model
+origin, before tire compression. Distribution and tire parameters remain estimates. The torque
+and speed reference values come from a documented similar TT motor.
 Visual detail does not establish calibrated physics, traction, or skid behavior.
 
 Validation: generated XML parsed; link and joint references, thin-board height,

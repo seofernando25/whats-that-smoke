@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from whats_that_smoke.aruco import ArucoFollower, Detection, FollowSteering
-from whats_that_smoke.web import RobotController, RobotState
+from ugv.aruco import ArucoFollower, Detection, FollowSteering
+from ugv.web import RobotController, RobotState
 
 
 @pytest.mark.parametrize('error,turn', [(-.2, 1), (.2, -1)])
@@ -130,7 +130,7 @@ def test_follow_loop_uses_selected_speed_and_finite_close_pivot():
 def test_stop_turns_follow_off_without_disarming_connected_owner():
     import json
     from fastapi import WebSocketDisconnect
-    from whats_that_smoke import web
+    from ugv import web
     async def scenario():
         controller = RobotController()
         controller.state.owner = 'testabcd'; controller.state.armed = True

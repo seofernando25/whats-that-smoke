@@ -1,0 +1,16 @@
+{
+  "measured_total_mass_g": 577.4,
+  "note": "Only total mass is measured. Component masses, envelopes and centers are estimates. Four 1 g numerical tire carriers are budgeted as mounting hardware, not extra mass.",
+  "rigid_components": [
+    {"name": "LiPo battery", "each_mass_g": 190, "centers_m": [[-0.002, 0, 0.030]], "envelope_m": [0.085, 0.044, 0.020]},
+    {"name": "TT motors", "each_mass_g": 30.6, "centers_m": [[0.050, 0.036625, 0.0339], [0.050, -0.036625, 0.0339], [-0.050, 0.036625, 0.0339], [-0.050, -0.036625, 0.0339]], "envelope_m": [0.070, 0.022, 0.018]},
+    {"name": "Main PCB", "each_mass_g": 45, "centers_m": [[0, 0, 0.04365]], "envelope_m": [0.1905, 0.09525, 0.0016]},
+    {"name": "Raspberry Pi with ports", "each_mass_g": 46, "centers_m": [[-0.048, 0, 0.065]], "envelope_m": [0.085, 0.056, 0.015]},
+    {"name": "Nano", "each_mass_g": 5, "centers_m": [[-0.054, 0.003, 0.083]], "envelope_m": [0.043, 0.018, 0.006]},
+    {"name": "Camera and mount", "each_mass_g": 8, "centers_m": [[0.104, 0, 0.030]], "envelope_m": [0.018, 0.034, 0.024]},
+    {"name": "Servo", "each_mass_g": 9, "centers_m": [[0.052, 0, 0.05345]], "envelope_m": [0.023, 0.013, 0.017]},
+    {"name": "Wires, fasteners, headers and other electronics", "each_mass_g": 20, "centers_m": [[0, 0, 0.044]], "envelope_m": [0.150, 0.080, 0.020]}
+  ],
+  "wheel": {"rubber_mass_g": 20, "plastic_mass_g": 12, "rubber_inner_radius_m_assumed": 0.0235, "hub_width_m_assumed": 0.018},
+  "each_carrier_mass_g": 1
+}

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from whats_that_smoke.aruco import ArucoFollower
+from ugv.aruco import ArucoFollower
 from unittest.mock import patch, AsyncMock
 from types import SimpleNamespace
 import asyncio

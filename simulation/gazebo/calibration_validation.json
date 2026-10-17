@@ -1,0 +1,59 @@
+{
+  "source_sessions": [
+    "2026-10-17-floor-01",
+    "2026-10-17-floor-long-01",
+    "2026-10-17-floor-long-03"
+  ],
+  "completed_trials": 116,
+  "raw_samples": 44282,
+  "dropped_samples": 0,
+  "held_out_comparison": [
+    {
+      "keys": "Q",
+      "held_out_yaw_dps": 142.21826001826454,
+      "gazebo_yaw_dps": 160.89409548767964,
+      "absolute_error_dps": 18.67583546941509,
+      "relative_error_percent": 13.131812656839301
+    },
+    {
+      "keys": "E",
+      "held_out_yaw_dps": -206.75282632645954,
+      "gazebo_yaw_dps": -199.85170235989008,
+      "absolute_error_dps": 6.9011239665694575,
+      "relative_error_percent": 3.337861972282153
+    },
+    {
+      "keys": "WA",
+      "held_out_yaw_dps": 82.1749697462056,
+      "gazebo_yaw_dps": 89.63736705759189,
+      "absolute_error_dps": 7.462397311386283,
+      "relative_error_percent": 9.081107464272423
+    },
+    {
+      "keys": "WD",
+      "held_out_yaw_dps": -94.63749329078686,
+      "gazebo_yaw_dps": -102.66104518244377,
+      "absolute_error_dps": 8.023551891656908,
+      "relative_error_percent": 8.47819570516669
+    },
+    {
+      "keys": "SD",
+      "held_out_yaw_dps": -112.23768142097866,
+      "gazebo_yaw_dps": -117.48515101867758,
+      "absolute_error_dps": 5.247469597698924,
+      "relative_error_percent": 4.675318958181992
+    },
+    {
+      "keys": "SA",
+      "held_out_yaw_dps": 82.5900176704619,
+      "gazebo_yaw_dps": 105.5980624299017,
+      "absolute_error_dps": 23.008044759439798,
+      "relative_error_percent": 27.8581424346499
+    }
+  ],
+  "angular_MAE_dps": 11.553070499361077,
+  "angular_MAPE_percent": 11.093739865232077,
+  "max_motor_torque_nm": 0.06814811720891287,
+  "translation_calibrated": false,
+  "long_term_drift_calibrated": false
+}

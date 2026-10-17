@@ -10,3 +10,7 @@ NM profile hardening:
 - observed boot association+DHCP ≈8s.
 
 Dashboard safety is independent of network reconnect: browser sends fresh drive intent every `150ms`; hardware guard brakes after `600ms` without a fresh drive message. Generic WebSocket heartbeat never renews motion.
+
+SSH: `ssh advanced` uses the laptop’s dedicated public key via `~/.ssh/config`.
+Pi source: `/home/advanced/ugv`; repository: `uOAeronautics/ugv`.
+No password or private key is stored in this repository.

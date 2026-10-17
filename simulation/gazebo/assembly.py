@@ -3,11 +3,12 @@
 X points toward the camera/front, Y left, Z up. Small components are approximate.
 """
 import math
+from tt_geometry import add_tt_motor
 
 COLORS = {
     'pcb': (.018, .024, .03), 'green': (.025, .26, .10),
     'blue': (.025, .11, .32), 'rubber': (.016, .019, .022),
-    'yellow': (.95, .55, .008), 'silver': (.52, .56, .59),
+    'yellow_dark': (.62, .32, .006), 'yellow': (.95, .55, .008), 'silver': (.52, .56, .59),
     'gold': (.56, .34, .07), 'chip': (.012, .014, .018),
     'orange': (.78, .28, .025), 'white': (.82, .84, .79),
     'red': (.55, .018, .012), 'lens': (.02, .045, .065),
@@ -41,12 +42,7 @@ def assembly(p):
         for side,s in [('left',1),('right',-1)]:
             tag=end+'_'+side
             y=s*(W/2-.011)
-            box(tag+'_gearbox',(x,y,motorbottom+.0085),(.025,.020,.017),'yellow',collision=True)
-            cyl(tag+'_motor',(x+direction*.022,y,motorbottom+.00635),.00635,.022,'silver',(0,math.pi/2,0),True)
-            cyl(tag+'_endcap',(x+direction*.034,y,motorbottom+.00635),.0058,.003,'chip',(0,math.pi/2,0))
-            box(tag+'_bracket',(x,y,board-.003),(.012,.023,.003),'silver')
-            box(tag+'_strap',(x+direction*.015,y,board-.006),(.002,.021,.011),'white')
-            cyl(tag+'_axle',(x,s*(W/2+.001),R),.002,.009,'silver',(math.pi/2,0,0))
+            add_tt_motor(groups['chassis']['parts'], tag, x, y, direction, s, motorbottom, R)
             group=tag+'_wheel'
             groups[group]={'origin':(x,s*track/2,R),'parts':[]}
             # Low-radius core plus outer tread blocks leave a visible tire pattern.
@@ -69,15 +65,15 @@ def assembly(p):
                          (.005,.002,.020),'yellow',(0,t+.12,0))
                 part(group,f'hub_{face}','cylinder',(0,yy+face*.001,0),(.007,.003),'yellow',(math.pi/2,0,0))
 
-    # Two-cell holder visible underneath, with open slots and end springs.
-    box('battery_holder_base',(-.002,0,.0365),(.066,.036,.002),'chip',collision=True)
-    for y in (-.018,.018):
-        box('battery_side_'+str(y),(-.002,y,.029),(.066,.002,.014),'chip')
-    box('battery_divider',(-.002,0,.029),(.066,.0015,.014),'chip')
-    for x in (-.035,.031):
-        box('battery_end_'+str(x),(x,0,.029),(.002,.036,.014),'chip')
-        for y in (-.009,.009):
-            cyl('spring_'+str((x,y)),(x,y,.029),.004,.003,'silver',(0,math.pi/2,0))
+    # Estimated low central LiPo envelope; mass and placement in mass_distribution.json.
+    box('lipo_pack',(-.002,0,.030),(.085,.044,.020),'silver',collision=True)
+    for x in (-.042,.038):
+        box('lipo_wrap_'+str(x),(x,0,.030),(.005,.0445,.0205),'yellow')
+    box('battery_retaining_strap',(-.002,0,.0195),(.012,.046,.001),'chip')
+    for y in (-.0225,.0225):
+        box('battery_strap_side_'+str(y),(-.002,y,.031),(.012,.001,.023),'chip')
+    box('battery_power_lead',(.044,.008,.034),(.013,.002,.002),'red')
+    box('battery_connector',(.052,.008,.034),(.006,.006,.005),'yellow')
 
     # Raised Raspberry Pi near the rear; positions estimated from top and side views.
     pi_z=board+.016

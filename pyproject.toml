@@ -1,5 +1,5 @@
 [project]
-name = "whats-that-smoke"
+name = "ugv"
 version = "0.1.0"
 description = "Bounded diagnostics for a Freenove FNK0043 Raspberry Pi car"
 readme = "README.md"
@@ -16,9 +16,12 @@ dependencies = [
 ]
 
 [project.scripts]
-wts = "whats_that_smoke:main"
-wts-dashboard = "whats_that_smoke.web:main"
+ugv = "ugv:main"
+ugv-dashboard = "ugv.web:main"
 
 [build-system]
 requires = ["uv_build>=0.12.7,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=8"]

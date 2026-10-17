@@ -14,6 +14,7 @@ from . import SERVO_CHANNELS, WHEEL_CHANNELS, _configure_pca9685, _set_pulse, _s
 from .aruco import ArucoFollower
 from .heading import RelativeHeading
 from .imu import ImuStream
+from .dynamics_telemetry import DynamicsTelemetry
 from .motion import GyroMotion, MotionFault, ramp_wheels
 from .parking import ParkingEstimator, Pose2, DockingFeedback, gear_obstacles
 
@@ -164,6 +165,7 @@ class RobotController:
         self.drive_deadline: float | None = None
         self.imu_sample_at: float | None = None
         self.heading = RelativeHeading()
+        self.dynamics = DynamicsTelemetry()
         self.parking = ParkingEstimator()
         self.parking_active = False
         self.parking_owner = None
@@ -178,6 +180,7 @@ class RobotController:
         self.state.imu_connected = True
         self.state.imu_status = "streaming"
         self.imu_sample_at = time.monotonic()
+        self.dynamics.append(self.imu_sample_at, acceleration, gyroscope, self.state)
         estimate = self.heading.update(acceleration, gyroscope, self.imu_sample_at, moving=not self.state.stopped)
         for key, value in estimate.items():
             setattr(self.state, key, value)
@@ -478,7 +481,7 @@ class RobotController:
 
 controller = RobotController(); camera = CameraStream(); aruco = ArucoFollower(camera, controller)
 imu = ImuStream(controller.imu_sample, controller.imu_status)
-app = FastAPI(title="What's That Smoke Control", docs_url=None, redoc_url=None)
+app = FastAPI(title="UGV Control", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 @app.on_event("startup")
@@ -492,6 +495,9 @@ def stream():
     return StreamingResponse(camera.frames(), media_type="multipart/x-mixed-replace; boundary=frame", headers={"Cache-Control":"no-store", "X-Accel-Buffering":"no"})
 @app.get("/api/state")
 async def state(): return controller.payload()
+
+@app.get("/api/dynamics")
+async def dynamics(after: int = 0): return controller.dynamics.snapshot(max(0, after))
 
 @app.get("/api/parking")
 async def parking_state(): return controller.parking.snapshot()
@@ -531,4 +537,4 @@ async def websocket_endpoint(ws: WebSocket):
         if aruco.owner == cid: await aruco.disable_follow("aruco-owner-disconnected")
         await controller.disconnect(cid)
 
-def main(): uvicorn.run("whats_that_smoke.web:app", host="0.0.0.0", port=8765, reload=False)
+def main(): uvicorn.run("ugv.web:app", host="0.0.0.0", port=8765, reload=False)

@@ -8,10 +8,10 @@
 deployed := optimized aruco.py + camera/vision telemetry + UI; service restarted; ArUco ON/FOLLOW OFF restored
 camera current := UC-788/Arducam mono; 1280x720/30fps; capture fresh during validation
 observed := native ID2 decoding now succeeds; fallback retained; 28.3 processed fps median over15s; 28.9ms median compute
-rollback := Pi /home/advanced/wts-vision-backup-bqgZIM/{aruco.py,web.py,app.js,index.html}
+rollback := Pi /home/advanced/ugv-vision-backup-bqgZIM/{aruco.py,web.py,app.js,index.html}
 detail := docs/ARUCO.md#performance
 shallow-view followup := corner refinement before retry decode + narrow cell-center sampling + bounded thresholds; live16s/40polls: ID2 visible40/40; fresh resampled33 + flow7; processed22.7fps median; compute33.8ms median/p95=59ms; camera30fps
-shallow-view rollback := Pi /home/advanced/wts-angle-backup-VqDnUW/aruco.py
+shallow-view rollback := Pi /home/advanced/ugv-angle-backup-VqDnUW/aruco.py
 ```
 
 ## ✓
@@ -136,7 +136,7 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - W/S forward/reverse; A/D and Q/E direct left/right turning. Input watchdog and STOP brake without disarming the connected owner; explicit DISARM, disconnect and shutdown still release ownership.
 - Seven mocked controller regression checks passed, including no-gyro turning, watchdog braking/resume, stop vs disarm, disconnect and disabled side-step. No physical movement tests.
 - Service restarted; UI/static assets/WebSocket verified and camera fresh after deployment.
-- Rollback files: /home/advanced/wts-simple-controls-backup-JwLzjy/{web.py,app.js,DASHBOARD.md,SAFETY.md,test_drive.py}.
+- Rollback files: /home/advanced/ugv-simple-controls-backup-JwLzjy/{web.py,app.js,DASHBOARD.md,SAFETY.md,test_drive.py}.
 
 ## 2026-10-13 curled ArUco detection completed
 
@@ -144,7 +144,7 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Ten detector regression functions passed, covering the cropped real tag, brightness shifts, 200 bent ID/rotation cases, 569 invalid codes, blank and image-edge rejection, tracker expiry, and stale-frame braking.
 - Added camera capture timeout/recovery with 5s startup grace, 2s frame timeout, graceful termination and bounded kill fallback. Three camera regression functions and seven simple-control checks passed; capture currently fresh at 30fps.
 - Stationary validation was follow-off and stopped. The user subsequently operated follow with multiple tags and accepted the detection goal as complete; no additional agent movement or camera fault injection was performed.
-- Source matches tested candidates; dashboard service remains active. Rollback: /home/advanced/wts-curved-tag-backup-WzCwZj/{aruco.py,web.py,test_aruco.py,ARUCO.md,STATE.md}; new tests/fixtures/curled-id0.png and tests/test_camera.py.
+- Source matches tested candidates; dashboard service remains active. Rollback: /home/advanced/ugv-curved-tag-backup-WzCwZj/{aruco.py,web.py,test_aruco.py,ARUCO.md,STATE.md}; new tests/fixtures/curled-id0.png and tests/test_camera.py.
 
 ## 2026-10-13 follow centering improvement
 
@@ -153,7 +153,7 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Speed slider updates the owner's active follow speed; STOP disables follow and brakes without automatically disarming. Fresh-frame/decode, ownership and disconnect gates remain.
 - Verified with controller mocks, a simulated80% motor dead zone at three response rates in both directions, pulse expiry without camera processing, and UI speed/ownership contracts. Physical centering has not been tested by the agent.
 - Validation: 49 Python tests and keyboard/follow-slider contract checks passed. Pi checks confirmed close-tag full-strength pivots and independent pulse braking with mocked hardware; UI/API served correctly and capture was fresh at30.1fps. Service restarted with follow off and robot disarmed.
-- Rollback: /home/advanced/wts-follow-center-backup-obbyd7zl/{aruco.py,web.py,app.js,ARUCO.md,DASHBOARD.md,SAFETY.md,STATE.md,.gitignore}.
+- Rollback: /home/advanced/ugv-follow-center-backup-obbyd7zl/{aruco.py,web.py,app.js,ARUCO.md,DASHBOARD.md,SAFETY.md,STATE.md,.gitignore}.
 
 ## 2026-10-13 drone-parking prototype and outside-gear survey
 
@@ -179,3 +179,21 @@ camera := stale before testing; service restart restored≈30fps; no camera reco
 - Refined skid-plane pose candidates with LM before geometric validation. The recorded seed's reprojection RMS decreased from approximately5.7px to4.4px; systematic geometry and mounting error remain unverified.
 - An outside-only alignment route to a camera-proxy staging point0.55m before the drone centre was computed and all42 sampled poses/sweeps checked against the nominal skids, using a200×280mm envelope inflated100mm. This route was not executed and does not demonstrate parking.
 - Prior Pi connection loss is explained by the depleted LiPo. No motor probe was issued after the outage. Existing raw captures and telemetry remain in ignored local work storage.
+
+## 2026-10-17 UGV migration and dynamics campaign
+
+Canonical source is `uOAeronautics/ugv`; laptop `~/Projects/ugv`, Pi
+`/home/advanced/ugv`, package/CLI `ugv`, system service `ugv-dashboard.service`.
+SSH alias `advanced` uses a dedicated public key; secrets are not in the repo.
+Pi package rebuilt in its new path; service active, dashboard HTTP 200;
+74 robot-side tests passed after the rename.
+
+Measured mass 577.4 g. Recorded 116 floor trials and 44,282 100 Hz IMU/PWM
+samples without telemetry loss. Longer trials last two seconds at PWM 1800;
+Q/E and curved motions show material asymmetry. Raw measurements remain on
+both machines; calibrated response and held-out simulator comparison are in
+`simulation/gazebo/real_robot_profile.json` and `calibration_validation.json`.
+See `DYNAMICS.md` for rest-window bias correction, conditional translation
+estimates and limitations. Absolute position, speed scale and stopping distance
+remain unverified by an independent measurement. The car finished stopped and
+disarmed; calibration did not change the real controller's ownership/watchdog.

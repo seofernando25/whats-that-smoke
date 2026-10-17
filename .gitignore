@@ -14,3 +14,7 @@ tmp/
 .pytest_cache/
 !tests/fixtures/*.png
 ._*
+
+# Raw calibration sessions; compact fitted profiles are versioned separately.
+calibration/runs/
+calibration/reports/
