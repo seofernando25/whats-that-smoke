@@ -1,3 +1,4 @@
 preview/
 *.blend
 *.blend1
+!assets/test_pad.png

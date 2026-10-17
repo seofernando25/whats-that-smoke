@@ -1,5 +1,6 @@
 """Generate a photo-informed Freenove visual model; stdlib only, SI in SDF."""
 from assembly import assembly, COLORS
+from environment import add_environment
 from pathlib import Path
 import json
 import math
@@ -31,17 +32,7 @@ def main():
     node(physics, 'real_time_factor', 1)
     for name, cls in [('physics', 'Physics'), ('user-commands', 'UserCommands'), ('scene-broadcaster', 'SceneBroadcaster')]:
         node(world, 'plugin', filename=f'gz-sim-{name}-system', name=f'gz::sim::systems::{cls}')
-    light = node(world, 'light', name='sun', type='directional')
-    node(light, 'pose', '0 0 5 0 0 0')
-    node(light, 'diffuse', '1 1 1 1')
-    node(light, 'direction', '-.5 .2 -1')
-    ground = node(world, 'model', name='ground')
-    node(ground, 'static', 'true')
-    gl = node(ground, 'link', name='ground_link')
-    for kind in ('collision', 'visual'):
-        plane = node(node(node(gl, kind, name=kind), 'geometry'), 'plane')
-        node(plane, 'normal', '0 0 1')
-        node(plane, 'size', '20 20')
+    add_environment(world, node)
     model = node(world, 'model', name='freenove')
     node(model, 'pose', '0 0 0.001 0 0 0')
 

@@ -8,29 +8,71 @@
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
-    <light name="sun" type="directional">
-      <pose>0 0 5 0 0 0</pose>
-      <diffuse>1 1 1 1</diffuse>
-      <direction>-.5 .2 -1</direction>
+    <scene>
+      <ambient>.65 .65 .65 1</ambient>
+      <background>.84 .88 .9 1</background>
+      <shadows>true</shadows>
+      <grid>false</grid>
+    </scene>
+    <light name="key_light" type="directional">
+      <pose>0 0 3 0 0 0</pose>
+      <diffuse>.85 .85 .85 1</diffuse>
+      <specular>.05 .05 .05 1</specular>
+      <direction>-.4 .3 -1</direction>
+      <cast_shadows>true</cast_shadows>
+    </light>
+    <light name="fill_light" type="directional">
+      <pose>0 0 3 0 0 0</pose>
+      <diffuse>.35 .38 .42 1</diffuse>
+      <specular>.05 .05 .05 1</specular>
+      <direction>.4 -.5 -1</direction>
+      <cast_shadows>false</cast_shadows>
     </light>
     <model name="ground">
       <static>true</static>
       <link name="ground_link">
-        <collision name="collision">
+        <visual name="floor_visual">
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>20 20</size>
+              <size>200 200</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>.64 .69 .7 1</ambient>
+            <diffuse>.64 .69 .7 1</diffuse>
+            <specular>0 0 0 1</specular>
+          </material>
+        </visual>
+        <collision name="floor_collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>200 200</size>
             </plane>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="metric_test_pad">
+          <pose>0 0 .00025 0 0 0</pose>
+          <cast_shadows>false</cast_shadows>
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>20 20</size>
+              <size>1.6 1.6</size>
             </plane>
           </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>assets/test_pad.png</albedo_map>
+                <roughness>1</roughness>
+                <metalness>0</metalness>
+              </metal>
+            </pbr>
+          </material>
         </visual>
       </link>
     </model>

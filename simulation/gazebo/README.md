@@ -54,7 +54,22 @@ gz sdf -k freenove_world.sdf
 gz sim -r --gui-config car_gui.config freenove_world.sdf
 ```
 
-`car_gui.config` starts with a close camera view. In a second terminal, run
+`car_gui.config` starts with a fixed, elevated view of the car and test pad,
+with editing panels hidden. The pale 1.6m square mat has a 10cm grid, marked
+home position, +X/front and +Y/left arrows, and a 50cm scale ruler. The floor
+texture and markings are visual only, so they do not introduce bumps or alter
+wheel contact. `environment.py` defines the floor, texture placement and lights.
+The car starts at the center facing +X. The fixed camera keeps the room's
+directions stable while the car turns; use the mouse to orbit or zoom.
+
+The checked-in `assets/test_pad.png` loads relative to the world file; no
+internet assets are required at runtime. To redraw this optional texture:
+
+```sh
+uv run --no-project --with pillow python make_test_pad.py
+```
+
+In a second terminal, run
 a bounded simulation-only drive demo:
 
 ```sh
