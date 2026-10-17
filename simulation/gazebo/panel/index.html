@@ -23,7 +23,13 @@
     </section>
     <section class="card view-card"><div class="card-head"><h2>On the test pad</h2><span class="live-label">WORLD POSITION</span></div>
       <div class="map"><canvas id="map" width="640" height="480" aria-label="Top-down position and recent path of the simulated car"></canvas><div class="map-caption"><i></i> Car &nbsp; <span>·</span> Recent path <span class="map-scale">10 cm grid</span></div></div>
-      <div class="telemetry"><div><span>X POSITION</span><strong id="x">0.00<small>m</small></strong></div><div><span>Y POSITION</span><strong id="y">0.00<small>m</small></strong></div><div><span>HEADING</span><strong id="heading">0<small>°</small></strong></div></div>
+      <div class="telemetry"><div><span>X POSITION</span><strong id="x">0.00<small>m</small></strong></div><div><span>Y POSITION</span><strong id="y">0.00<small>m</small></strong></div><div><span>WORLD YAW · CCW</span><strong id="heading">0<small>°</small></strong></div></div>
+      <section class="imu-panel" aria-label="Simulated noisy IMU">
+        <div class="card-head"><h3>Noisy Nano IMU</h3><button id="imu-zero" class="subtle">Zero heading ↺</button></div>
+        <p id="imu-status" role="status">Waiting for IMU · hold still to zero</p>
+        <div class="telemetry imu-values"><div><span>IMU HEADING · CW</span><strong id="imu-heading">—</strong></div><div><span>TRUE RELATIVE · CW</span><strong id="imu-truth">—</strong></div><div><span>HEADING ERROR</span><strong id="imu-error">—</strong></div></div>
+        <p class="imu-note">Recorded sensor noise · same heading estimator as the car</p>
+      </section>
       <div class="simulation"><div><h3>Simulation</h3><p id="motion">Waiting for the simulation</p></div><div class="sim-buttons"><button id="play">▶ Play</button><button id="pause">Ⅱ Pause</button><button id="reset" title="Stop and reset the world; reset leaves the simulation paused">↺ Reset</button></div></div>
     </section>
   </main>

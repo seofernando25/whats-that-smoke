@@ -8,6 +8,7 @@
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu" />
     <scene>
       <ambient>.65 .65 .65 1</ambient>
       <background>.84 .88 .9 1</background>
@@ -4260,6 +4261,13 @@
             </pbr>
           </material>
         </visual>
+        <sensor name="nano_ideal_imu" type="imu">
+          <pose>-0.054 0.003 0.08245 0 0 0</pose>
+          <always_on>true</always_on>
+          <update_rate>1000</update_rate>
+          <topic>/model/freenove/imu/ideal</topic>
+          <imu />
+        </sensor>
       </link>
       <link name="front_left_wheel">
         <pose>0.06985 0.060325 0.03175 0 0 0</pose>

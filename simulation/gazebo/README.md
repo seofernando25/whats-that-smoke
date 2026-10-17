@@ -167,3 +167,11 @@ rendered from the same assembly definition. On macOS arm64 with Gazebo Sim
 changed both the published odometry and the simulated model's world pose.
 This verifies loading and basic movement; the physics parameters remain
 uncalibrated.
+
+## Noisy IMU
+
+The local console now feeds a 100 Hz simulated Nano IMU through the unchanged
+real-car heading estimator. Hold still for three simulation seconds to zero it;
+then compare IMU heading with true relative heading and error in the console.
+The noise/bias profile comes from the existing real recordings. See
+[IMU model and topics](IMU_MODEL.md) for units, fitting, reset behavior and limits.

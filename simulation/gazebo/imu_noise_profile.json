@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "sensor": "Nano 33 BLE Sense Rev2 BMI270",
+  "seed": 5774,
+  "update_rate_hz": 100,
+  "ideal_physics_rate_hz": 1000,
+  "anti_alias_cutoff_hz_assumed": 25,
+  "bandwidth_note": "Two-pole 25Hz low-pass and 10ms average of physics-rate ideal samples before adding 100Hz recorded noise; anti-alias approximation, not an identified BMI270 filter.",
+  "source_recordings": [
+    {
+      "session": "2026-10-17-floor-01",
+      "sha256": "db4ab2e2849fb9f68876e51f54b2ab6a830234ffb7f76a437a8d3a169b571582",
+      "rest_samples": 10103
+    },
+    {
+      "session": "2026-10-17-floor-long-01",
+      "sha256": "eabc3f6d7889a1bc96ce92c105a5e5327bec3569ea31e2b1432c20c771a7440b",
+      "rest_samples": 4324
+    },
+    {
+      "session": "2026-10-17-floor-long-03",
+      "sha256": "1e63f7d52e08db183f26bc424e3d09ab8634171bccd83a92a8a68e2a5319dc9a",
+      "rest_samples": 5236
+    },
+    {
+      "session": "2026-10-17-laps-right-01",
+      "sha256": "7e8beeaa5ef56a37b26206b24cbd2715c983f83b52b036af0e8bf7a2b140f272",
+      "rest_samples": 2248
+    }
+  ],
+  "rest_spans": 120,
+  "rest_samples": 21911,
+  "settled_rest_s": 219.21951944399962,
+  "selection": "Zero wheel PWM, stopped, >=1s after stop, |gyro|<4 dps, acceleration norm within 0.1g; gaps >=50ms split spans.",
+  "channels": {
+    "accel_g": {
+      "mean": [
+        -0.26884315599603986,
+        -0.1503467676077889,
+        0.950391371532693
+      ],
+      "white_covariance": [
+        [
+          3.8023967903351807e-07,
+          -4.142832173116286e-09,
+          -3.248750679702875e-08
+        ],
+        [
+          -4.142832173116286e-09,
+          2.9450705225735117e-07,
+          -1.9677357461428827e-08
+        ],
+        [
+          -3.248750679702875e-08,
+          -1.9677357461428827e-08,
+          5.145645235895987e-07
+        ]
+      ],
+      "white_std": [
+        0.0006166357750191908,
+        0.0005426850396476313,
+        0.0007173315297612387
+      ],
+      "rest_window_mean_std": [
+        0.006479380838811776,
+        0.006960138614409669,
+        0.0012689661009085166
+      ],
+      "short_term_bias_std": [
+        9.757558496890032e-05,
+        9.014861210740837e-05,
+        9.010084647663707e-05
+      ],
+      "short_term_bias_tau_s": [
+        0.5,
+        0.1857227862057933,
+        0.5
+      ],
+      "half_second_lag1": [
+        0.023105756705924078,
+        0.06773281761203072,
+        0.0
+      ],
+      "tau_note": "Fitted from lag-1 of 0.5s rest means when rho>0.05; otherwise unresolved and set to the 0.5s block resolution, not measured long-term drift."
+    },
+    "gyro_dps": {
+      "mean": [
+        -0.011201213810338638,
+        0.8118421540405266,
+        -0.013124565908717202
+      ],
+      "white_covariance": [
+        [
+          0.0015264647664522421,
+          -0.0001379008852699029,
+          0.00018071400514824119
+        ],
+        [
+          -0.0001379008852699029,
+          0.0017044835604681486,
+          -0.00017034881682838942
+        ],
+        [
+          0.00018071400514824119,
+          -0.00017034881682838942,
+          0.0018672593214896286
+        ]
+      ],
+      "white_std": [
+        0.039069998290916806,
+        0.04128539161093363,
+        0.04321179609191949
+      ],
+      "rest_window_mean_std": [
+        0.00735291006085665,
+        0.008855884282586383,
+        0.007844661333141793
+      ],
+      "short_term_bias_std": [
+        0.00557200275104905,
+        0.005659974086697939,
+        0.006501436623722184
+      ],
+      "short_term_bias_tau_s": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "half_second_lag1": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tau_note": "Fitted from lag-1 of 0.5s rest means when rho>0.05; otherwise unresolved and set to the 0.5s block resolution, not measured long-term drift."
+    }
+  },
+  "body_to_sensor_matrix": [
+    [
+      -0.9599782223845429,
+      -0.07764898099970444,
+      -0.26909561181320035
+    ],
+    [
+      0.12154233761213916,
+      -0.9811120410416182,
+      -0.15048794998579382
+    ],
+    [
+      -0.2523277089722606,
+      -0.17717166441860147,
+      0.951283831783108
+    ]
+  ],
+  "accel_bias_g": [
+    0.0002524558171604907,
+    0.00014118237800492262,
+    -0.0008924602504150059
+  ],
+  "gyro_bias_dps": [
+    -0.011201213810338638,
+    0.8118421540405266,
+    -0.013124565908717202
+  ],
+  "position_body_m": [
+    -0.054,
+    0.003,
+    0.08245
+  ],
+  "position_note": "Approximate Nano board centre from visual assembly, not a measured sensor lever arm.",
+  "bias_model": "Mean measured rest gyro offset; per-reset spread from observed rest-window means. Independent per-axis Ornstein-Uhlenbeck short-term bias fitted to 0.5s rest-block statistics; sample noise uses full measured residual covariance.",
+  "limits": [
+    "Window-to-window spread comes from one campaign, not independent power cycles.",
+    "Dynamic bias is a short-rest approximation; long-term random walk, temperature dependence and Allan variance are uncalibrated.",
+    "Rest residuals include mounting vibration and firmware filtering; modeled Gaussian innovations are not identified intrinsic sensor noise density.",
+    "Gravity fixes tilt, launch acceleration estimates forward orientation. Accelerometer offset along gravity is not separately identifiable from scale/tilt.",
+    "Motor-on vibration is not added from moving records because true acceleration and sensor error cannot be separated without an external reference."
+  ]
+}

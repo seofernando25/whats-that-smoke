@@ -64,15 +64,17 @@ $('#speed').addEventListener('input', () => {
   $('#speed-value').innerHTML = `${Number($('#speed').value)} <small>PWM</small>`;
   drive();
 });
-for (const action of ['launch', 'play', 'pause', 'reset']) {
+for (const action of ['launch', 'play', 'pause', 'reset', 'imu-zero']) {
   $(`#${action}`).onclick = async () => {
     stop(); suspended = true; notice();
+    document.querySelectorAll('.sim-buttons button, #imu-zero, #launch').forEach(button => button.disabled = true);
     try {
       await post('/api/action', {action});
       if (action === 'reset') { trail = []; notice('Reset complete. Click Play, then hold a driving key.'); }
+      if (action === 'imu-zero') notice('Hold still for 3 seconds of simulation time to zero the IMU.');
       if (action === 'launch') notice('Gazebo is opening. The connection indicator will turn green when ready.');
     } catch (error) { notice(error.message); }
-    finally { suspended = false; }
+    finally { suspended = false; document.querySelectorAll('.sim-buttons button, #imu-zero, #launch').forEach(button => button.disabled = false); }
   };
 }
 window.addEventListener('blur', () => { stop(); $('#focus-note').textContent = 'Controls released. Click this window to drive again.'; });
@@ -91,6 +93,12 @@ async function poll() {
     $('#x').innerHTML = `${state.pose.x.toFixed(2)}<small>m</small>`;
     $('#y').innerHTML = `${state.pose.y.toFixed(2)}<small>m</small>`;
     $('#heading').innerHTML = `${Math.round(state.pose.yaw * 180 / Math.PI)}<small>°</small>`;
+    const imu = state.imu || {}, calibrated = online && imu.heading_calibrated;
+    const angle = value => Number.isFinite(value) ? `${value.toFixed(2)}<small>°</small>` : '—';
+    $('#imu-heading').innerHTML = calibrated ? angle(imu.heading_deg) : '—';
+    $('#imu-truth').innerHTML = calibrated ? angle(imu.truth_heading_deg) : '—';
+    $('#imu-error').innerHTML = calibrated ? angle(imu.heading_error_deg) : '—';
+    $('#imu-status').textContent = !online ? 'IMU offline' : paused ? 'Paused · IMU time held' : !imu.streaming ? 'Waiting for IMU samples' : imu.heading_status;
     const last = trail.at(-1);
     if (online && (!last || Math.hypot(state.pose.x-last.x, state.pose.y-last.y) > .003)) {
       trail.push({...state.pose}); if (trail.length > 500) trail.shift();

@@ -35,7 +35,7 @@ def main():
     physics = node(world, 'physics', name='default', type='ignored')
     node(physics, 'max_step_size', .001)
     node(physics, 'real_time_factor', 1)
-    for name, cls in [('physics', 'Physics'), ('user-commands', 'UserCommands'), ('scene-broadcaster', 'SceneBroadcaster')]:
+    for name, cls in [('physics', 'Physics'), ('user-commands', 'UserCommands'), ('scene-broadcaster', 'SceneBroadcaster'), ('imu', 'Imu')]:
         node(world, 'plugin', filename=f'gz-sim-{name}-system', name=f'gz::sim::systems::{cls}')
     add_environment(world, node)
     model = node(world, 'model', name='freenove')
@@ -73,6 +73,14 @@ def main():
                     node(mat,'ambient',color)
                     node(mat,'diffuse',color)
                     add_visual_material(mat,node,part['color'],motor)
+        if name=='chassis':
+            imu_profile=json.loads((HERE/'imu_noise_profile.json').read_text())
+            sensor=node(link,'sensor',name='nano_ideal_imu',type='imu')
+            node(sensor,'pose',' '.join(map(str,(*imu_profile['position_body_m'],0,0,0))))
+            node(sensor,'always_on','true')
+            node(sensor,'update_rate',imu_profile['ideal_physics_rate_hz'])
+            node(sensor,'topic','/model/freenove/imu/ideal')
+            node(sensor,'imu')  # Ideal chassis axes; Nano mounting/noise applied once in imu_model.py.
         if name!='chassis':
             # A millimetre-scale equivalent radial tyre spring allows load to
             # distribute across all four tires instead of rigid diagonal rocking.

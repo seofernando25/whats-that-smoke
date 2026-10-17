@@ -1,0 +1,28 @@
+{
+  "sensor_rate_hz": 99.99999999999999,
+  "rest_gyro_mean_dps": [
+    -0.014385071051348156,
+    0.8003327469430956,
+    -0.030185456810606314
+  ],
+  "rest_gyro_std_dps": [
+    0.03964895430876437,
+    0.041307296261137064,
+    0.044596797939544484
+  ],
+  "max_heading_error_deg": 1.8722665168569108,
+  "mean_heading_error_deg": 1.1086133685204473,
+  "received_ideal": 16384,
+  "received_noisy": 1637,
+  "received_nano_json": 1637,
+  "heading_code": "src/ugv/heading.py RelativeHeading (unchanged)",
+  "checks": [
+    "W600ms -> WD steer right",
+    "Q pivot left",
+    "SI/Nano JSON equivalence",
+    "No truth orientation on noisy topic",
+    "Pause freezes simulation time",
+    "Reset auto-recalibrates",
+    "Manual heading zero"
+  ]
+}

@@ -244,3 +244,13 @@ node simulation/gazebo/check_browser_controls.cjs
 
 The browser regression now keeps W down while alternating D across all six
 turns, in addition to the repeated-reset and pivot-versus-steer checks.
+
+## Simulated IMU
+
+The console uses the unchanged `RelativeHeading` estimator with a noisy Nano-frame
+stream derived from the native Gazebo IMU. `imu_noise_profile.json` fits 21,911
+settled rest samples from the four recorded sessions. Native physics-rate input
+is averaged to 100 Hz before adding measured rest covariance, gyro offset and
+short-term bias variation. Perfect orientation is available for comparison only.
+See [the IMU model](../simulation/gazebo/IMU_MODEL.md) for reproducible fitting,
+transport topics, validation and the uncalibrated long-term drift limits.
