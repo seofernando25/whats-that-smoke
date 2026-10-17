@@ -46,3 +46,9 @@ Refs: [Freenove FNK0043](https://github.com/Freenove/Freenove_4WD_Smart_Car_Kit_
 See [arduino/README.md](arduino/README.md) for Nano 33 BLE Sense Rev2 firmware, acknowledged BLE streaming, a VQF orientation dashboard on port 8766, and transport stress scripts. Run it independently on a laptop or provision it on the Pi; it does not actuate the car.
 
 Drone parking observation and prototype: [docs/PARKING.md](docs/PARKING.md). Open the dashboard and press **MAP**; exact entry awaits verified geometry and calibration.
+
+## Gazebo car model
+
+See [simulation/gazebo/README.md](simulation/gazebo/README.md) for the photo-informed
+Freenove model, editable dimensions, close camera configuration, bounded drive
+demo, and Blender preview renderer. The simulation has no hardware connection.
