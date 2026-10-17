@@ -31,7 +31,8 @@ class TTMotorSystem final : public gz::sim::System,
   std::mutex mutex;
   double linear{0}, angular{0}, radius{.03175}, track{.12065};
   double stall{.0784532}, omega0{26.17994}, feedback{.06};
-  double integralGain{.6}, brakeDamping{.06}, brakeResistance{.01};
+  double integralGain{.6}, brakeDamping{.06}, brakeResistance{.01}, steeringBrakeTau{0};
+  std::array<double,4> brakeEngagement{};
   std::array<double,4> wheelInertia{{1e-5,1e-5,1e-5,1e-5}};
   double pwmLeft{0}, pwmRight{0}, leftVoltageGain{1.475}, rightVoltageGain{1.475};
   bool pwmMode{false};
@@ -55,7 +56,8 @@ class TTMotorSystem final : public gz::sim::System,
     integralGain = sdf->Get<double>("velocity_integral", integralGain).first;
     brakeDamping=sdf->Get<double>("brake_damping",brakeDamping).first;
     brakeResistance=sdf->Get<double>("brake_resistance",brakeResistance).first;
-    if (radius <= 0 || track <= 0 || stall <= 0 || omega0 <= 0 || brakeDamping<0 || brakeResistance<0)
+    steeringBrakeTau=sdf->Get<double>("steering_brake_rise_tau",steeringBrakeTau).first;
+    if (steeringBrakeTau<0 || radius <= 0 || track <= 0 || stall <= 0 || omega0 <= 0 || brakeDamping<0 || brakeResistance<0)
       throw std::runtime_error("TT motor parameters must be positive");
     leftVoltageGain=sdf->Get<double>("pwm_left_voltage_gain",leftVoltageGain).first;
     rightVoltageGain=sdf->Get<double>("pwm_right_voltage_gain",rightVoltageGain).first;
@@ -130,7 +132,7 @@ class TTMotorSystem final : public gz::sim::System,
     std::lock_guard<std::mutex> guard(mutex);
     linear = angular = pwmLeft = pwmRight = 0;
     pwmMode=false;
-    integral.fill(0);filteredDuty.fill(0);
+    integral.fill(0);filteredDuty.fill(0);brakeEngagement.fill(0);
     lastPub = {};
     for (auto j : joints)
       if (j != gz::sim::kNullEntity && ecm.HasEntity(j))
@@ -196,14 +198,16 @@ class TTMotorSystem final : public gz::sim::System,
             std::clamp(i%2==0 ? pl*leftVoltageGain : pr*rightVoltageGain,-1.,1.);
         auto sign=[](double x){return int(x>1e-9)-int(x < -1e-9);};
         double tau=riseTau[(sign(pl+pr)+1)*3+sign(pr-pl)+1];
-        // Empirical spin-up lag; zero command still brakes immediately.
-        if(duty==0 || tau<=0) filteredDuty[i]=duty;
+        // Fit describes spin-up only. A load/effort reduction must not retain
+        // the previous straight-line effort and surge into a steering chord.
+        if(duty==0 || tau<=0 || std::abs(duty)<std::abs(filteredDuty[i])) filteredDuty[i]=duty;
         else filteredDuty[i]+=(1-std::exp(-dt/tau))*(duty-filteredDuty[i]);
         duty=filteredDuty[i];
         target=duty*omega0;
       }
       double torque = std::clamp(stall*(duty-omega/omega0), -stall, stall);
       bool braking=direct ? std::abs(i%2==0 ? pl : pr)<1e-9 : target==0;
+      if(!braking) brakeEngagement[i]=0;
       if(braking && dt>0)
       {
         // Real zero PWM is the H-bridge brake state, including the held inside
@@ -211,7 +215,13 @@ class TTMotorSystem final : public gz::sim::System,
         // The inertia cap prevents an explicit damping step reversing the wheel.
         double resistance=std::min({stall,brakeDamping*std::abs(omega)+brakeResistance,
                                    wheelInertia[i]*std::abs(omega)/dt});
-        torque=-std::copysign(resistance,omega);
+        // Aggregate loaded brake take-up fitted to continuous W -> WD IMU
+        // response, not a claimed electrical H-bridge delay. Full release and
+        // watchdog expiry bypass this lag and brake all wheels immediately.
+        if(direct && (std::abs(pl)+std::abs(pr)>1e-9) && steeringBrakeTau>0)
+          brakeEngagement[i]+=(1-std::exp(-dt/steeringBrakeTau))*(1-brakeEngagement[i]);
+        else brakeEngagement[i]=1;
+        torque=-brakeEngagement[i]*std::copysign(resistance,omega);
       }
       if (!std::isfinite(torque)) torque = 0;
       ecm.SetComponentData<gz::sim::components::JointForceCmd>(joints[i], {torque});

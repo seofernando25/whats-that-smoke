@@ -1,8 +1,8 @@
 {
-  "reason": "Re-fit drive effort after correcting reset velocity feedback and enabling bounded brake resistance on zero-command wheels.",
-  "brake_damping_nm_s_per_rad_assumed": 0.06,
-  "brake_resistance_nm_assumed": 0.01,
-  "source": "post-reset headless floor measurements at PWM1800; raw calibration/runs/brake-refit-basis.json",
+  "reason": "Continuous W600ms -> WD180 floor laps exposed excessive inside-wheel brake resistance and turn-transition error; fit finite brake drag, loaded take-up and aggregate drive effort together.",
+  "brake_damping_nm_s_per_rad_assumed": 0.003,
+  "brake_resistance_nm_assumed": 0.002,
+  "source": "2026-10-17-laps-right-01: six uninterrupted right half-turns; lap_reference.json; radius remains conditional on inertial assumptions.",
   "corrections": [
     {
       "keys": "Q",
@@ -26,37 +26,51 @@
       "keys": "WA",
       "forward": 1,
       "turn": 1,
-      "factor": 0.7826226180091753,
+      "factor": 1.0095831772318362,
       "target_yaw_dps": 84.57038698624115,
       "baseline_yaw_dps": 108.06023879219097,
-      "baseline_effective_duty": 0.6079993951542778
+      "baseline_effective_duty": 0.6079993951542778,
+      "source": "Arc effort jointly adjusted with 0.003 viscous / 0.002 constant brake resistance; right arc checked in continuous laps, other arcs checked against prior gyro trials."
     },
     {
       "keys": "WD",
       "forward": 1,
       "turn": -1,
-      "factor": 0.7337399935227984,
+      "factor": 0.9465245916444099,
       "target_yaw_dps": -99.66361750114541,
       "baseline_yaw_dps": -135.8296104627541,
-      "baseline_effective_duty": 0.712527751694577
+      "baseline_effective_duty": 0.712527751694577,
+      "source": "Arc effort jointly adjusted with 0.003 viscous / 0.002 constant brake resistance; right arc checked in continuous laps, other arcs checked against prior gyro trials."
     },
     {
       "keys": "SD",
       "forward": -1,
       "turn": -1,
-      "factor": 0.7554100415386326,
+      "factor": 0.974478953584836,
       "target_yaw_dps": -110.56535922019708,
       "baseline_yaw_dps": -146.36469353120538,
-      "baseline_effective_duty": 0.7804446185619178
+      "baseline_effective_duty": 0.7804446185619178,
+      "source": "Arc effort jointly adjusted with 0.003 viscous / 0.002 constant brake resistance; right arc checked in continuous laps, other arcs checked against prior gyro trials."
     },
     {
       "keys": "SA",
       "forward": -1,
       "turn": 1,
-      "factor": 0.7328006209944744,
+      "factor": 0.945312801082872,
       "target_yaw_dps": 102.26137023832169,
       "baseline_yaw_dps": 139.54869484082053,
-      "baseline_effective_duty": 0.7287115167618363
+      "baseline_effective_duty": 0.7287115167618363,
+      "source": "Arc effort jointly adjusted with 0.003 viscous / 0.002 constant brake resistance; right arc checked in continuous laps, other arcs checked against prior gyro trials."
+    }
+  ],
+  "steering_brake_rise_tau_s_empirical": 0.18,
+  "pwm_rise_tau_overrides": [
+    {
+      "forward": 1,
+      "turn": 0,
+      "keys": "W",
+      "tau_s": 0.07,
+      "source": "Continuous WD -> W gyro decay; aggregate response lag, not motor voltage measurement."
     }
   ]
 }

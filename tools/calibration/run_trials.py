@@ -55,7 +55,7 @@ async def run(args):
                 for sample in p['samples']:
                     raw.write(json.dumps(sample,separators=(',',':'))+'\n'); samples.append(sample)
                 seq=p['latest_seq']
-                await asyncio.sleep(.08)
+                await asyncio.sleep(.015 if args.laps else .08)
         receiver=asyncio.create_task(receive()); collector=asyncio.create_task(collect())
         async def send(p):await ws.send(json.dumps(p))
         def check(moving=False):
@@ -86,6 +86,41 @@ async def run(args):
             mark('baseline_start');await rest(12);mark('baseline_end')
             if not quiet():raise RuntimeError('Robot not resting steadily')
             await send(dict(type='arm'));await asyncio.sleep(.2);check(True)
+            if args.laps:
+                # A continuous user keyboard sequence: W for 600 ms, then W+D
+                # until a relative 180-degree right turn, with W held throughout.
+                baseline=[v for v in samples if v['t']>time.monotonic()-5]
+                bias=[statistics.median(v['gyro_dps'][i] for v in baseline) for i in range(3)]
+                gravity=[statistics.median(v['accel_g'][i] for v in baseline) for i in range(3)]
+                norm=math.sqrt(sum(v*v for v in gravity));up=[v/norm for v in gravity]
+                def yaw_rate(sample):
+                    return sum((sample['gyro_dps'][i]-bias[i])*up[i] for i in range(3))
+                for leg in range(args.laps*2):
+                    mark('phase_start',phase='forward',leg=leg,keys='W',pwm=1800)
+                    until=time.monotonic()+.6
+                    while time.monotonic()<until:
+                        check(True);await send(dict(type='drive',forward=1,turn=0,strafe=0,speed_limit=1800))
+                        await asyncio.sleep(min(.04,max(0,until-time.monotonic())))
+                    mark('phase_end',phase='forward',leg=leg)
+                    mark('phase_start',phase='right_turn',leg=leg,keys='WD',pwm=1800)
+                    previous=samples[-1];angle=0.;deadline=time.monotonic()+4
+                    while angle>-180:
+                        check(True)
+                        if time.monotonic()>deadline:raise RuntimeError('180-degree turn deadline exceeded')
+                        await send(dict(type='drive',forward=1,turn=-1,strafe=0,speed_limit=1800))
+                        await asyncio.sleep(.025)
+                        for sample in samples:
+                            if sample['seq']>previous['seq']:
+                                dt=sample['t']-previous['t']
+                                if dt>.10:raise RuntimeError('IMU integration gap')
+                                angle+=(yaw_rate(previous)+yaw_rate(sample))*.5*dt
+                                previous=sample
+                    mark('phase_end',phase='right_turn',leg=leg,yaw_angle_deg=angle)
+                    print(f'Leg {leg+1}/{args.laps*2}: W 600ms -> W+D {angle:.1f} degrees',flush=True)
+                await send(dict(type='stop',reason='disarm'))
+                mark('sequence_end');await rest(12)
+                manifest['status']='complete';manifest['sequence']='continuous W600ms -> WD right180, repeated'
+                return
             # Pair each command with its inverse to limit accumulated displacement.
             pairs=['W','S','Q','E','WA','SD','WD','SA']
             plan=[(k,600,0) for k in pairs]
@@ -137,6 +172,7 @@ if __name__=='__main__':
     p.add_argument('--output',required=True);p.add_argument('--floor-clear',action='store_true')
     p.add_argument('--probe',action='store_true');p.add_argument('--long',action='store_true')
     p.add_argument('--start-index',type=int,default=0)
+    p.add_argument('--laps',type=int,choices=range(1,5),default=0)
     args=p.parse_args()
     if not args.floor_clear:p.error('--floor-clear required: supervised, clear floor')
     asyncio.run(run(args))

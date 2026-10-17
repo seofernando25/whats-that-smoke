@@ -24,6 +24,8 @@ class GazeboBridge:
         self.duty_publisher = self.node.advertise('/model/freenove/wheel_duty', Double_V)
         self.lock = threading.Lock()
         self.last_stats = 0
+        self.sim_time_s = 0.
+        self.real_time_factor = 0.
         self.paused = True
         self.pose = {'x': 0, 'y': 0, 'yaw': 0}
         self.process = None
@@ -37,6 +39,8 @@ class GazeboBridge:
         with self.lock:
             self.last_stats = time.monotonic()
             self.paused = message.paused
+            self.sim_time_s = message.sim_time.sec + message.sim_time.nsec*1e-9
+            self.real_time_factor = message.real_time_factor
         if message.paused:
             self.control.stop()
 
@@ -53,8 +57,9 @@ class GazeboBridge:
         with self.lock:
             online = time.monotonic() - self.last_stats < 3
             paused, pose = self.paused, dict(self.pose)
+            sim_time_s, rtf = self.sim_time_s, self.real_time_factor
         v, w = self.control.command(online and not paused)
-        return dict(online=online, paused=paused, pose=pose, linear=v if self.control.pwm is None else None, angular=w if self.control.pwm is None else None, driving=any(self.control.duty_command(online and not paused)) if self.control.pwm is not None else bool(v or w), pwm=self.control.pwm, drive_mode="real-car PWM" if self.control.pwm is not None else "SI velocity")
+        return dict(online=online, paused=paused, pose=pose, sim_time_s=sim_time_s, real_time_factor=rtf, linear=v if self.control.pwm is None else None, angular=w if self.control.pwm is None else None, driving=any(self.control.duty_command(online and not paused)) if self.control.pwm is not None else bool(v or w), pwm=self.control.pwm, drive_mode="real-car PWM" if self.control.pwm is not None else "SI velocity")
 
     def publish_command(self):
         state = self.status()

@@ -1,0 +1,316 @@
+{
+  "source_session": "2026-10-17-laps-right-01",
+  "phases": [
+    {
+      "keys": "W",
+      "leg": 0,
+      "duration_s": 0.6005804070000522,
+      "yaw_angle_deg": -1.4737286047547793,
+      "steady_yaw_dps": 2.7406086249595947
+    },
+    {
+      "keys": "WD",
+      "leg": 0,
+      "duration_s": 2.0019945730000472,
+      "yaw_angle_deg": -182.72824884783415,
+      "steady_yaw_dps": -97.72825512997304,
+      "conditional_forward_mps": 0.2818560521240348,
+      "conditional_radius_m": 0.16524558015948476,
+      "sample_velocity_p20_p80_mps": [
+        -0.15028999839287632,
+        0.6540234821284299
+      ]
+    },
+    {
+      "keys": "W",
+      "leg": 1,
+      "duration_s": 0.6011308699999063,
+      "yaw_angle_deg": -9.090617586156277,
+      "steady_yaw_dps": 3.8409789604317113
+    },
+    {
+      "keys": "WD",
+      "leg": 1,
+      "duration_s": 1.8603476649996082,
+      "yaw_angle_deg": -181.7291217174913,
+      "steady_yaw_dps": -107.02392508529178,
+      "conditional_forward_mps": 0.21702587531663517,
+      "conditional_radius_m": 0.11618585929142408,
+      "sample_velocity_p20_p80_mps": [
+        -0.28119464302815017,
+        0.7154062762939147
+      ]
+    },
+    {
+      "keys": "W",
+      "leg": 2,
+      "duration_s": 0.6003833889999441,
+      "yaw_angle_deg": -8.911254462347841,
+      "steady_yaw_dps": 3.66548311789455
+    },
+    {
+      "keys": "WD",
+      "leg": 2,
+      "duration_s": 2.065289794999444,
+      "yaw_angle_deg": -182.16141421316422,
+      "steady_yaw_dps": -93.76782974680006,
+      "conditional_forward_mps": 0.2813335749956343,
+      "conditional_radius_m": 0.17190572210217075,
+      "sample_velocity_p20_p80_mps": [
+        -0.35753127286726666,
+        0.7838551021853964
+      ]
+    },
+    {
+      "keys": "W",
+      "leg": 3,
+      "duration_s": 0.6003712400006407,
+      "yaw_angle_deg": -9.151470540702444,
+      "steady_yaw_dps": 0.0802445382968839
+    },
+    {
+      "keys": "WD",
+      "leg": 3,
+      "duration_s": 1.854959590999897,
+      "yaw_angle_deg": -182.64847056184942,
+      "steady_yaw_dps": -106.93275556539511,
+      "conditional_forward_mps": 0.2388922325234716,
+      "conditional_radius_m": 0.1280011593237413,
+      "sample_velocity_p20_p80_mps": [
+        -0.11016207984945645,
+        0.6058514175083176
+      ]
+    },
+    {
+      "keys": "W",
+      "leg": 4,
+      "duration_s": 0.6009072219994778,
+      "yaw_angle_deg": -8.568934950547048,
+      "steady_yaw_dps": -0.39937328004631023
+    },
+    {
+      "keys": "WD",
+      "leg": 4,
+      "duration_s": 2.0333811840000635,
+      "yaw_angle_deg": -182.24331381840074,
+      "steady_yaw_dps": -94.00712942245215,
+      "conditional_forward_mps": 0.25287830932202915,
+      "conditional_radius_m": 0.15412511735621162,
+      "sample_velocity_p20_p80_mps": [
+        -0.1378292447664803,
+        0.6246126737439637
+      ]
+    },
+    {
+      "keys": "W",
+      "leg": 5,
+      "duration_s": 0.601707499999975,
+      "yaw_angle_deg": -10.164859049881828,
+      "steady_yaw_dps": -1.5431143929051938
+    },
+    {
+      "keys": "WD",
+      "leg": 5,
+      "duration_s": 2.0481468690004476,
+      "yaw_angle_deg": -187.84870263477833,
+      "steady_yaw_dps": -96.62217498966686,
+      "conditional_forward_mps": 0.2741431760843997,
+      "conditional_radius_m": 0.16256358308667407,
+      "sample_velocity_p20_p80_mps": [
+        -0.09441035829056697,
+        0.7010315891856823
+      ]
+    }
+  ],
+  "gyro_bias_before_dps": [
+    0.0,
+    0.7935,
+    0.0
+  ],
+  "gyro_bias_after_dps": [
+    0.0,
+    0.7935,
+    0.0
+  ],
+  "method": "Interpolate pre/post rest gyro bias, project onto measured gravity; integrate each continuous phase.",
+  "translation_calibrated": false,
+  "translation_limits": "Conditional v=a_left/omega with flat rigid floor, fixed tilt, negligible steady lateral acceleration derivative and estimated IMU lever arm. Vibration and tilt contaminate acceleration; radius is a model-fitting hypothesis, not measured path or confidence interval.",
+  "events": [
+    {
+      "event": "phase_start",
+      "t": 4360.547898251,
+      "phase": "forward",
+      "leg": 0,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4361.148478658,
+      "phase": "forward",
+      "leg": 0
+    },
+    {
+      "event": "phase_start",
+      "t": 4361.148531658,
+      "phase": "right_turn",
+      "leg": 0,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4363.150526231,
+      "phase": "right_turn",
+      "leg": 0,
+      "yaw_angle_deg": -181.8592321704521
+    },
+    {
+      "event": "phase_start",
+      "t": 4363.150749398,
+      "phase": "forward",
+      "leg": 1,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4363.751880268,
+      "phase": "forward",
+      "leg": 1
+    },
+    {
+      "event": "phase_start",
+      "t": 4363.751970287,
+      "phase": "right_turn",
+      "leg": 1,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4365.612317952,
+      "phase": "right_turn",
+      "leg": 1,
+      "yaw_angle_deg": -180.32879897131815
+    },
+    {
+      "event": "phase_start",
+      "t": 4365.612580952,
+      "phase": "forward",
+      "leg": 2,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4366.212964341,
+      "phase": "forward",
+      "leg": 2
+    },
+    {
+      "event": "phase_start",
+      "t": 4366.213094878,
+      "phase": "right_turn",
+      "leg": 2,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4368.278384673,
+      "phase": "right_turn",
+      "leg": 2,
+      "yaw_angle_deg": -180.95609656186278
+    },
+    {
+      "event": "phase_start",
+      "t": 4368.278616932,
+      "phase": "forward",
+      "leg": 3,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4368.878988172,
+      "phase": "forward",
+      "leg": 3
+    },
+    {
+      "event": "phase_start",
+      "t": 4368.879121117,
+      "phase": "right_turn",
+      "leg": 3,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4370.734080708,
+      "phase": "right_turn",
+      "leg": 3,
+      "yaw_angle_deg": -181.24716252554157
+    },
+    {
+      "event": "phase_start",
+      "t": 4370.734281375,
+      "phase": "forward",
+      "leg": 4,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4371.335188597,
+      "phase": "forward",
+      "leg": 4
+    },
+    {
+      "event": "phase_start",
+      "t": 4371.335302504,
+      "phase": "right_turn",
+      "leg": 4,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4373.368683688,
+      "phase": "right_turn",
+      "leg": 4,
+      "yaw_angle_deg": -181.26635208023902
+    },
+    {
+      "event": "phase_start",
+      "t": 4373.368879392,
+      "phase": "forward",
+      "leg": 5,
+      "keys": "W",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4373.970586892,
+      "phase": "forward",
+      "leg": 5
+    },
+    {
+      "event": "phase_start",
+      "t": 4373.970636558,
+      "phase": "right_turn",
+      "leg": 5,
+      "keys": "WD",
+      "pwm": 1800
+    },
+    {
+      "event": "phase_end",
+      "t": 4376.018783427,
+      "phase": "right_turn",
+      "leg": 5,
+      "yaw_angle_deg": -184.68139518933359
+    }
+  ],
+  "sample_count": 4041,
+  "dropped_samples": 0
+}

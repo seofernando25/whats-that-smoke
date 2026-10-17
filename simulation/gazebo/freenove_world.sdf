@@ -18677,8 +18677,9 @@
         <wheel_separation>0.12065</wheel_separation>
         <wheel_radius>0.03175</wheel_radius>
         <stall_torque>0.0784532</stall_torque>
-        <brake_damping>0.06</brake_damping>
-        <brake_resistance>0.01</brake_resistance>
+        <brake_damping>0.003</brake_damping>
+        <brake_resistance>0.002</brake_resistance>
+        <steering_brake_rise_tau>0.18</steering_brake_rise_tau>
         <no_load_speed>26.17993877991494</no_load_speed>
         <velocity_feedback>0.06</velocity_feedback>
         <velocity_integral>0.6</velocity_integral>
@@ -18710,34 +18711,35 @@
 1 1 0 0.000000000
 1 1 500 0.000000000
 1 1 600 0.000000000
-1 1 800 0.037592930
-1 1 1300 0.229990096
-1 1 1800 0.475834078
+1 1 800 0.048494880
+1 1 1300 0.296687224
+1 1 1800 0.613825961
 1 -1 0 0.000000000
 1 -1 500 0.000000000
 1 -1 600 0.000000000
 1 -1 800 0.000000000
-1 -1 1300 0.371059639
-1 -1 1800 0.522810108
+1 -1 1300 0.478666934
+1 -1 1800 0.674425039
 -1 1 0 0.000000000
 -1 1 500 0.000000000
 -1 1 600 0.000000000
--1 1 800 0.085473419
--1 1 1300 0.260763786
--1 1 1800 0.534000252
+-1 1 800 0.110260711
+-1 1 1300 0.336385284
+-1 1 1800 0.688860325
 -1 -1 0 0.000000000
 -1 -1 500 0.000000000
 -1 -1 600 0.000000000
--1 -1 800 0.070864184
--1 -1 1300 0.320664597
--1 -1 1800 0.589555702</empirical_pwm_map>
+-1 -1 800 0.091414797
+-1 -1 1300 0.413657330
+-1 -1 1800 0.760526855</empirical_pwm_map>
         <pwm_rise_tau>
 0 1 0.060000000
 0 -1 0.085000000
 1 1 0.165000000
 1 -1 0.060000000
 -1 1 0.145000000
--1 -1 0.120000000</pwm_rise_tau>
+-1 -1 0.120000000
+1 0 0.070000000</pwm_rise_tau>
       </plugin>
       <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
         <dimensions>2</dimensions>

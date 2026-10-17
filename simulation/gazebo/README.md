@@ -2,7 +2,7 @@
 
 The local drive console now uses the real car's 500–1800 PWM scale, matching
 WASDQE mixing and combined inputs. The real-car effort/contact fit comes from
-116 floor trials; see [dynamics calibration](../../docs/DYNAMICS.md) and
+116 floor trials plus six continuous lap half-turns; see [dynamics calibration](../../docs/DYNAMICS.md) and
 `real_robot_profile.json`. Turn response is gyro-measured; translation remains
 a provisional short-burst inertial estimate. Release or command expiry brakes
 the simulated car. This console has no connection to real hardware.

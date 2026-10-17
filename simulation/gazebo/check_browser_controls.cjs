@@ -38,9 +38,33 @@ const assert=require('node:assert/strict');
    }
    results.push({keys,turn_deg:degrees,path_m:path,radius_m:radius,late_drift_m:lateDrift});
   }
+  // Continuous lap replay: W remains down across every straight/turn boundary.
+  await action('reset');await action('play');
+  const reference=require('./lap_reference.json');const lapResults=[];
+  const capture=async duration=>{
+   const samples=[await state()];const deadline=performance.now()+duration*1000;
+   while(performance.now()<deadline){await page.waitForTimeout(15);samples.push(await state());}
+   let angle=0;
+   for(let i=1;i<samples.length;i++)angle+=Math.atan2(Math.sin(samples[i].pose.yaw-samples[i-1].pose.yaw),Math.cos(samples[i].pose.yaw-samples[i-1].pose.yaw));
+   return {degrees:angle*180/Math.PI,minRealTimeFactor:Math.min(...samples.map(s=>s.real_time_factor)),simDuration:samples.at(-1).sim_time_s-samples[0].sim_time_s};
+  };
+  await page.keyboard.down('w');
+  try {
+   for(const phase of reference.phases){
+    if(phase.keys==='WD')await page.keyboard.down('d');
+    const {degrees,minRealTimeFactor,simDuration}=await capture(phase.duration_s);
+    lapResults.push({keys:phase.keys,leg:phase.leg,turn_deg:degrees,real_turn_deg:phase.yaw_angle_deg,min_real_time_factor:minRealTimeFactor,sim_duration_s:simDuration});
+    if(phase.keys==='WD')await page.keyboard.up('d');
+   }
+  } finally {await page.keyboard.up('d');await page.keyboard.up('w');}
+  const turns=lapResults.filter(r=>r.keys==='WD');
+  const meanError=turns.reduce((sum,r)=>sum+Math.abs(r.turn_deg-r.real_turn_deg),0)/turns.length;
+  console.log(JSON.stringify({continuous_laps:lapResults,half_turn_mean_abs_error_deg:meanError},null,2));
+  assert(meanError<12,`Continuous browser half-turn mean error ${meanError} degrees`);
+  assert(turns.every(r=>Math.abs(r.turn_deg-r.real_turn_deg)<25),'Continuous browser half-turn diverged');
   const wa=results.find(r=>r.keys==='wa'),wq=results.find(r=>r.keys==='wq');
   assert(Math.abs(wa.turn_deg-wq.turn_deg)/wa.turn_deg<.25,'W+A and W+Q should be equivalent');
   assert.deepEqual(errors,[]);console.log(JSON.stringify(results,null,2));
-  console.log('PASS: real browser key chords, six resets, pivot vs steering geometry, release braking');
+  console.log('PASS: real browser key chords, six resets, pivot vs steering geometry, release braking and six continuous lap turns');
  } finally {await action('reset');await action('play');await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

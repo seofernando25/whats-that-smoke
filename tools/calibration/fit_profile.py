@@ -60,6 +60,10 @@ def fit():
         fits=[r["first_order"] for r in training if r["keys"]==keys and r["first_order"]]
         f,t=vector(keys)
         response_tau.append(dict(forward=f,turn=t,keys=keys,tau_s=max(.01,statistics.median(r["time_constant_s"] for r in fits)-.025)))
+    if correction:
+        for override in correction.get("pwm_rise_tau_overrides",[]):
+            response_tau=[r for r in response_tau if (r["forward"],r["turn"])!=(override["forward"],override["turn"])]
+            response_tau.append(override)
     profile=dict(brake_effort_refit=correction,pwm_rise_tau=response_tau,schema_version=1,measured_total_mass_kg=.5774,hardware_pwm_max=1800,
         lateral_slip_m_per_s_per_n=.30,
         meaning='Aggregate empirical effort/contact fit; effective duty is not a measured motor voltage or friction coefficient.',

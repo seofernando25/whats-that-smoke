@@ -160,7 +160,7 @@ fits alone did not detect this failure.
 The motor system now removes the velocity request components during Reset,
 clears cached joint entities and recreates the requests on the next update.
 It refuses powered torque until wheel-speed feedback is available. Zero input
-also applies bounded estimated gearbox/brake resistance, including the held
+also applies bounded estimated gearbox/brake resistance, including the braked
 inside wheels of W+A. Accepted browser commands publish immediately instead
 of waiting for the next 50 ms transport tick. Static panel assets disable
 caching so refreshed tabs load the current control code.
@@ -184,4 +184,63 @@ The browser check needs Playwright and Chromium plus the local panel running.
 It fails if W+A turns less than 120 degrees in its two-second hold, if a pivot
 translates excessively, or if the car still drifts 200 ms after release.
 The native check measures the turn centre and requires forward braking below
-0.02 m/s within 0.18 s. Neither test commands the real robot.
+0.02 m/s within 0.20 s. Neither test commands the real robot.
+
+
+## Continuous right laps (2026-10-17)
+
+After the operator disarmed the dashboard and reconfirmed the clear floor,
+`2026-10-17-laps-right-01` recorded three continuous laps: six repetitions of
+W for 600 ms, then W+D until the bias-corrected gyro reached a relative 180°
+right turn. W stayed held across every boundary; there were no intermediate
+stops or simulation resets. All 4,041 raw samples were retained with no drops.
+The recorder stopped and disarmed at the end. Turn intervals were 1.85–2.07 s.
+
+The previous yaw-only fit hid an overly tight turn: its simulated steady radius
+was about 7 cm and forward turn speed about 0.13 m/s. Reducing finite brake
+resistance and fitting entry/exit response produces roughly 13–15 cm simulated
+radius and 0.24–0.26 m/s turn speed. The same real raw mixing remains in use:
+W+D keeps the left motor command at full dashboard power and brakes the right.
+Zero PWM applies finite resistance; it does not impose a locked wheel.
+
+`analyze_laps.py` interpolates stationary gyro bias before/after the sequence,
+projects onto measured gravity and integrates each command interval. It does
+not reset heading at each straight/turn transition when recording the drive.
+It also estimates conditional steady turning speed using lateral acceleration
+and an assumed IMU lever arm. Vibration and tilt make these estimates noisy;
+**there is no independently measured real trajectory or turn radius**. The
+wider simulated arc is an informed estimate, not verified position matching.
+An external measured lap width or tracked floor reference is needed to finish
+translation calibration. The simulator is deterministic and does not yet model
+battery variation or stochastic sensor drift.
+
+The aggregate brake take-up fit is 0.18 s for a zero wheel during a powered arc;
+all-wheel release and watchdog expiry bypass that lag. W spin-up uses 0.07 s,
+which also reproduces residual yaw when releasing D while retaining W. These
+are drivetrain/contact response parameters, not identified electrical delays.
+A spin-up filter no longer retains excess effort when the target effort falls.
+
+Replaying the exact twelve real command intervals gave 7.6° mean absolute
+half-turn error (11.2° maximum) and 1.2° mean turn-exit error. These are repeated
+calibration-sequence checks, not a new held-out position validation. Full-power
+straight release settles below 0.02 m/s in approximately 0.17–0.19 s in Gazebo;
+this is a simulator measurement, not a measured physical stopping distance.
+Compact real phase data and the latest replay are versioned as
+`simulation/gazebo/lap_reference.json` and `lap_validation.json`.
+
+For another authorized supervised real session, `run_trials.py --floor-clear
+--laps 3 --output calibration/runs/NEW-LAPS` runs the bounded sequence (4 s
+maximum per half-turn, fresh IMU, ownership and watchdog checks). Analyze it
+with `python tools/calibration/analyze_laps.py calibration/runs/NEW-LAPS`.
+`record_observed.py` provides read-only telemetry capture of manual driving;
+it never arms or drives the car.
+
+The simulation-only replay works from the versioned reference without raw logs:
+
+```sh
+simulation/gazebo/.control-venv/bin/python simulation/gazebo/check_lap_physics.py
+node simulation/gazebo/check_browser_controls.cjs
+```
+
+The browser regression now keeps W down while alternating D across all six
+turns, in addition to the repeated-reset and pivot-versus-steer checks.

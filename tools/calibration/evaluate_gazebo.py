@@ -27,6 +27,8 @@ def run(args):
     from gz.msgs.world_control_pb2 import WorldControl
     from gz.msgs.boolean_pb2 import Boolean
     env=plugin_environment();env['GZ_PARTITION']=os.environ['GZ_PARTITION']
+    if not args.profile and any(getattr(args,key,None) is not None for key in ('arc_scale','forward_tau')):
+        raise ValueError('--arc-scale and --forward-tau require --profile')
     root=E.parse(GAZEBO/'freenove_world.sdf')
     plugin=root.find('.//plugin[@name="ugv::TTMotorSystem"]')
     if not args.profile:
@@ -37,6 +39,22 @@ def run(args):
         el=plugin.find(key)
         if el is None:el=E.SubElement(plugin,key)
         el.text=str(value)
+    for key,value in [('brake_resistance',getattr(args,'brake_resistance',None)),('steering_brake_rise_tau',getattr(args,'brake_tau',None))]:
+        if value is not None:
+            el=plugin.find(key)
+            if el is None:el=E.SubElement(plugin,key)
+            el.text=str(value)
+    if getattr(args,'forward_tau',None) is not None:
+        el=plugin.find('pwm_rise_tau')
+        el.text+='\n1 0 '+str(args.forward_tau)
+    if getattr(args,'arc_scale',None) is not None:
+        mapping=plugin.find('empirical_pwm_map')
+        rows=[]
+        for line in mapping.text.strip().splitlines():
+            f,t,pwm,duty=map(float,line.split())
+            if f and t:duty=min(1,duty*args.arc_scale)
+            rows.append(f'{int(f)} {int(t)} {pwm} {duty}')
+        mapping.text='\n'.join(rows)
     if args.brake_damping is not None:
         el=plugin.find('brake_damping')
         if el is None:el=E.SubElement(plugin,'brake_damping')
@@ -74,6 +92,44 @@ def run(args):
         while not poses and time.monotonic()<until:time.sleep(.1)
         if not poses:raise RuntimeError('Gazebo did not initialize')
         time.sleep(1.0)
+        if getattr(args,'lap_events',None):
+            content=Path(args.lap_events).read_text()
+            try:events=json.loads(content)['events']
+            except json.JSONDecodeError:events=[json.loads(line) for line in content.splitlines()]
+            phases=[]
+            for index,event in enumerate(events):
+                if event['event']!='phase_start':continue
+                end=next(e for e in events[index+1:] if e['event']=='phase_end')
+                phases.append(dict(keys=event['keys'],leg=event['leg'],duration=end['t']-event['t']))
+            drive('',args.pwm,.7)
+            begin=len(poses)
+            for phase in phases:
+                start=len(poses);t0=poses[-1]['t'];deadline=time.monotonic()+10
+                duties=wheel_duties(phase['keys'],args.pwm)
+                message=Double_V();message.data.extend([-duties['front-left']/4095,-duties['front-right']/4095])
+                while poses[-1]['t']-t0<phase['duration']:
+                    if time.monotonic()>deadline:raise RuntimeError('Simulation clock stalled')
+                    pub.publish(message);time.sleep(.01)
+                active=poses[max(0,start-1):]
+                angle=sum(math.atan2(math.sin(b['yaw']-a['yaw']),math.cos(b['yaw']-a['yaw'])) for a,b in zip(active,active[1:]))
+                tail=[p for p in active if p['t']>t0+.65*phase['duration']]
+                values=[]
+                for a,b in zip(tail,tail[1:]):
+                    dt=b['t']-a['t']
+                    if dt<=0:continue
+                    w=math.atan2(math.sin(b['yaw']-a['yaw']),math.cos(b['yaw']-a['yaw']))/dt
+                    vx=(b['x']-a['x'])/dt;vy=(b['y']-a['y'])/dt
+                    values.append((math.degrees(w),vx*math.cos(a['yaw'])+vy*math.sin(a['yaw'])))
+                yaw=statistics.median(v[0] for v in values);speed=statistics.median(v[1] for v in values)
+                result=dict(**phase,sim_duration_s=active[-1]['t']-active[0]['t'],yaw_angle_deg=math.degrees(angle),
+                    steady_yaw_dps=yaw,steady_forward_mps=speed,radius_m=abs(speed/math.radians(yaw)) if abs(yaw)>1 else None,
+                    start=active[0],end=active[-1])
+                results.append(result);print(result,flush=True)
+            end=len(poses);drive('',args.pwm,1.)
+            stop=poses[max(0,end-1):]
+            distance=sum(math.hypot(b['x']-a['x'],b['y']-a['y']) for a,b in zip(stop,stop[1:]))
+            out.write_text(json.dumps(dict(phases=results,trajectory=poses[begin:],stopping_path_m=distance),indent=2))
+            return
         for keys in args.keys.split(','):
             if args.reset_between:
                 request=WorldControl();request.pause=True;request.reset.all=True
@@ -130,6 +186,7 @@ def run(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--left',type=float,default=1.475);p.add_argument('--right',type=float,default=1.475)
+    p.add_argument('--forward-tau',type=float);p.add_argument('--brake-tau',type=float);p.add_argument('--lap-events');p.add_argument('--brake-resistance',type=float);p.add_argument('--arc-scale',type=float)
     p.add_argument('--reset-between',action='store_true');p.add_argument('--brake-damping',type=float);p.add_argument('--mu',type=float)
     p.add_argument('--profile',action='store_true');p.add_argument('--slip',type=float);p.add_argument('--pwm',type=int,default=1800)
     p.add_argument('--keys',default='Q,E,WA,WD,SD,SA');p.add_argument('--duration',type=float,default=2)
