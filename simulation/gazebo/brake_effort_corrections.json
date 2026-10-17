@@ -1,0 +1,62 @@
+{
+  "reason": "Re-fit drive effort after correcting reset velocity feedback and enabling bounded brake resistance on zero-command wheels.",
+  "brake_damping_nm_s_per_rad_assumed": 0.06,
+  "brake_resistance_nm_assumed": 0.01,
+  "source": "post-reset headless floor measurements at PWM1800; raw calibration/runs/brake-refit-basis.json",
+  "corrections": [
+    {
+      "keys": "Q",
+      "forward": 0,
+      "turn": 1,
+      "factor": 0.999991824414873,
+      "target_yaw_dps": 155.724730010526,
+      "baseline_yaw_dps": 155.72600316172134,
+      "baseline_effective_duty": 0.5559869638181433
+    },
+    {
+      "keys": "E",
+      "forward": 0,
+      "turn": -1,
+      "factor": 1.0576864148819225,
+      "target_yaw_dps": -200.3624575026106,
+      "baseline_yaw_dps": -189.4346515975423,
+      "baseline_effective_duty": 0.7078149496152178
+    },
+    {
+      "keys": "WA",
+      "forward": 1,
+      "turn": 1,
+      "factor": 0.7826226180091753,
+      "target_yaw_dps": 84.57038698624115,
+      "baseline_yaw_dps": 108.06023879219097,
+      "baseline_effective_duty": 0.6079993951542778
+    },
+    {
+      "keys": "WD",
+      "forward": 1,
+      "turn": -1,
+      "factor": 0.7337399935227984,
+      "target_yaw_dps": -99.66361750114541,
+      "baseline_yaw_dps": -135.8296104627541,
+      "baseline_effective_duty": 0.712527751694577
+    },
+    {
+      "keys": "SD",
+      "forward": -1,
+      "turn": -1,
+      "factor": 0.7554100415386326,
+      "target_yaw_dps": -110.56535922019708,
+      "baseline_yaw_dps": -146.36469353120538,
+      "baseline_effective_duty": 0.7804446185619178
+    },
+    {
+      "keys": "SA",
+      "forward": -1,
+      "turn": 1,
+      "factor": 0.7328006209944744,
+      "target_yaw_dps": 102.26137023832169,
+      "baseline_yaw_dps": 139.54869484082053,
+      "baseline_effective_duty": 0.7287115167618363
+    }
+  ]
+}

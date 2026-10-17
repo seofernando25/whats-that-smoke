@@ -75,7 +75,7 @@ also do not establish long-term bias instability or a bias random-walk model.
 
 The 577.4 g measured mass and composite inertia are retained. The native
 `ugv::TTMotorSystem` applies finite DC output-shaft torque to each wheel, with
-back EMF, dynamic braking and a 400 ms command timeout. Browser controls publish
+back EMF, bounded zero-input gearbox/brake resistance and a 400 ms command timeout. Browser controls publish
 normalized wheel duties on `/model/freenove/wheel_duty`; the original
 `cmd_vel` path remains available for SI-velocity diagnostics.
 
@@ -83,7 +83,9 @@ An empirical lookup maps `(forward, turn, PWM)` to **effective drive effort**,
 then the motor/contact simulation determines the motion. This is an aggregate
 behavior fit, not a measurement of motor voltage, motor electrical constants,
 individual motor torque or rubber friction. Per-command first-order spin-up lags reproduce the measured turn transients;
-release still brakes immediately. Separate curves preserve the real
+release requests the bridge brake state immediately. Brake resistance is an
+estimated finite wheel torque, capped to prevent reversing a stopped wheel
+in a single physics step. Separate curves preserve the real
 left/right and forward/reverse arc asymmetries and low-power dead zones.
 Lateral force-dependent slip is fitted at 0.30 m/(s·N); longitudinal slip stays
 at its reference assumption. These are effective contact-model parameters.
@@ -144,3 +146,42 @@ python3 -m unittest discover -s tools/calibration -p 'test_*.py'
 python3 -m unittest discover -s simulation/gazebo -p 'test_*.py'
 gz sdf -k simulation/gazebo/freenove_world.sdf
 ```
+
+## Reset and release regression (2026-10-17)
+
+The first browser smoke test only required a small heading change and missed a
+reset defect: Gazebo cleared its joint-velocity request bookkeeping while the
+custom motor system kept the old zero-valued velocity components. Back EMF
+and the brake on the stationary inside wheels then used zero instead of the
+actual wheel speed. After reset, W+A could travel almost straight and keep
+coasting even though both keys reached the server correctly. Fresh-world yaw
+fits alone did not detect this failure.
+
+The motor system now removes the velocity request components during Reset,
+clears cached joint entities and recreates the requests on the next update.
+It refuses powered torque until wheel-speed feedback is available. Zero input
+also applies bounded estimated gearbox/brake resistance, including the held
+inside wheels of W+A. Accepted browser commands publish immediately instead
+of waiting for the next 50 ms transport tick. Static panel assets disable
+caching so refreshed tabs load the current control code.
+
+`brake_effort_corrections.json` records the refit of effective effort after this
+brake-model change; `fit_profile.py` applies it reproducibly. Tire Coulomb
+coefficients are unchanged. This correction addresses motor feedback and
+braking rather than treating all sliding as a reason to raise tire friction.
+
+The stronger regressions exercise repeated resets, actual wheel feedback,
+forward travel, a near-centre Q pivot, tight translating W+A/W+D/W+Q arcs,
+and actual post-release displacement:
+
+```sh
+simulation/gazebo/.control-venv/bin/python simulation/gazebo/check_reset_physics.py
+node simulation/gazebo/check_browser_controls.cjs
+```
+
+The browser check needs Playwright and Chromium plus the local panel running.
+`PLAYWRIGHT_MODULE` and `CHROME_PATH` optionally select installed runtimes.
+It fails if W+A turns less than 120 degrees in its two-second hold, if a pivot
+translates excessively, or if the car still drifts 200 ms after release.
+The native check measures the turn centre and requires forward braking below
+0.02 m/s within 0.18 s. Neither test commands the real robot.

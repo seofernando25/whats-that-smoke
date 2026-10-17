@@ -49,12 +49,18 @@ def fit():
                 effort=float(np.interp(abs(rate),[p[0] for p in points],[p[1] for p in points])) if abs(rate)>3 else 0.
             maps.append(dict(keys=keys,forward=f,turn=t,pwm=pwm,effective_duty=effort,
                              target_yaw_dps=rate,source=source))
+    correction_path=ROOT/'simulation/gazebo/brake_effort_corrections.json'
+    correction=json.loads(correction_path.read_text()) if correction_path.exists() else None
+    if correction:
+        factors={(r['forward'],r['turn']):r['factor'] for r in correction['corrections']}
+        for row in maps:
+            row['effective_duty']=min(1.,row['effective_duty']*factors.get((row['forward'],row['turn']),1.))
     response_tau=[]
     for keys in ("Q","E","WA","WD","SA","SD"):
         fits=[r["first_order"] for r in training if r["keys"]==keys and r["first_order"]]
         f,t=vector(keys)
         response_tau.append(dict(forward=f,turn=t,keys=keys,tau_s=max(.01,statistics.median(r["time_constant_s"] for r in fits)-.025)))
-    profile=dict(pwm_rise_tau=response_tau,schema_version=1,measured_total_mass_kg=.5774,hardware_pwm_max=1800,
+    profile=dict(brake_effort_refit=correction,pwm_rise_tau=response_tau,schema_version=1,measured_total_mass_kg=.5774,hardware_pwm_max=1800,
         lateral_slip_m_per_s_per_n=.30,
         meaning='Aggregate empirical effort/contact fit; effective duty is not a measured motor voltage or friction coefficient.',
         angular_calibration='gyro rest-bias corrected; projected onto measured gravity; short-pulse and two-second trials',

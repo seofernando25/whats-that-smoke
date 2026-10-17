@@ -56,17 +56,20 @@ class GazeboBridge:
         v, w = self.control.command(online and not paused)
         return dict(online=online, paused=paused, pose=pose, linear=v if self.control.pwm is None else None, angular=w if self.control.pwm is None else None, driving=any(self.control.duty_command(online and not paused)) if self.control.pwm is not None else bool(v or w), pwm=self.control.pwm, drive_mode="real-car PWM" if self.control.pwm is not None else "SI velocity")
 
+    def publish_command(self):
+        state = self.status()
+        if self.control.pwm is not None:
+            message=Double_V()
+            message.data.extend(self.control.duty_command(state['online'] and not state['paused']))
+            self.duty_publisher.publish(message)
+        else:
+            message = Twist()
+            message.linear.x, message.angular.z = state['linear'], state['angular']
+            self.publisher.publish(message)
+
     def publish_loop(self):
         while not self.closed.wait(.05):
-            state = self.status()
-            if self.control.pwm is not None:
-                message=Double_V()
-                message.data.extend(self.control.duty_command(state['online'] and not state['paused']))
-                self.duty_publisher.publish(message)
-            else:
-                message = Twist()
-                message.linear.x, message.angular.z = state['linear'], state['angular']
-                self.publisher.publish(message)
+            self.publish_command()
 
     def action(self, action):
         self.control.stop()
@@ -90,7 +93,12 @@ class GazeboBridge:
         ok, response = self.node.request('/world/freenove_lab/control', message,
                                          WorldControl, Boolean, 5000)
         if not ok or not response.data:
-            raise ValueError('Gazebo did not respond; open the simulation first')
+            # Service discovery can briefly retain the previous server after
+            # a world reload. Pause/play/reset are safe to retry once.
+            time.sleep(.2)
+            ok,response=self.node.request('/world/freenove_lab/control',message,WorldControl,Boolean,5000)
+            if not ok or not response.data:
+                raise ValueError('Gazebo did not respond; open the simulation first')
 
     def close(self):
         self.control.stop()

@@ -11,49 +11,156 @@
     {
       "keys": "Q",
       "held_out_yaw_dps": 142.21826001826454,
-      "gazebo_yaw_dps": 160.89409548767964,
-      "absolute_error_dps": 18.67583546941509,
-      "relative_error_percent": 13.131812656839301
+      "gazebo_yaw_dps": 156.69893991779355,
+      "absolute_error_dps": 14.480679899529008,
+      "relative_error_percent": 10.182011717531427
     },
     {
       "keys": "E",
       "held_out_yaw_dps": -206.75282632645954,
-      "gazebo_yaw_dps": -199.85170235989008,
-      "absolute_error_dps": 6.9011239665694575,
-      "relative_error_percent": 3.337861972282153
+      "gazebo_yaw_dps": -213.68351423917352,
+      "absolute_error_dps": 6.930687912713978,
+      "relative_error_percent": 3.3521611461651935
     },
     {
       "keys": "WA",
       "held_out_yaw_dps": 82.1749697462056,
-      "gazebo_yaw_dps": 89.63736705759189,
-      "absolute_error_dps": 7.462397311386283,
-      "relative_error_percent": 9.081107464272423
+      "gazebo_yaw_dps": 91.41210246077961,
+      "absolute_error_dps": 9.237132714574003,
+      "relative_error_percent": 11.240810605835998
     },
     {
       "keys": "WD",
       "held_out_yaw_dps": -94.63749329078686,
-      "gazebo_yaw_dps": -102.66104518244377,
-      "absolute_error_dps": 8.023551891656908,
-      "relative_error_percent": 8.47819570516669
+      "gazebo_yaw_dps": -98.70306217241702,
+      "absolute_error_dps": 4.065568881630156,
+      "relative_error_percent": 4.295938892990467
     },
     {
       "keys": "SD",
       "held_out_yaw_dps": -112.23768142097866,
-      "gazebo_yaw_dps": -117.48515101867758,
-      "absolute_error_dps": 5.247469597698924,
-      "relative_error_percent": 4.675318958181992
+      "gazebo_yaw_dps": -112.58764050974021,
+      "absolute_error_dps": 0.34995908876155113,
+      "relative_error_percent": 0.3118017802318387
     },
     {
       "keys": "SA",
       "held_out_yaw_dps": 82.5900176704619,
-      "gazebo_yaw_dps": 105.5980624299017,
-      "absolute_error_dps": 23.008044759439798,
-      "relative_error_percent": 27.8581424346499
+      "gazebo_yaw_dps": 101.43215420122775,
+      "absolute_error_dps": 18.842136530765842,
+      "relative_error_percent": 22.814060418229793
     }
   ],
-  "angular_MAE_dps": 11.553070499361077,
-  "angular_MAPE_percent": 11.093739865232077,
-  "max_motor_torque_nm": 0.06814811720891287,
+  "angular_MAE_dps": 8.984360837995757,
+  "angular_MAPE_percent": 8.699464093497452,
+  "motion_geometry_and_release": {
+    "W": {
+      "body_forward_mps": 0.7636023574463555,
+      "body_lateral_mps": 9.88334684175581e-07,
+      "instantaneous_center_body_xy_m": null,
+      "stopping_path_m": 0.037181422572817785,
+      "stop_time_to_002_mps_s": 0.10200000000000031,
+      "yaw_coast_deg": -0.11533502706088335
+    },
+    "S": {
+      "body_forward_mps": -0.7980234510038391,
+      "body_lateral_mps": -1.2973567155408503e-05,
+      "instantaneous_center_body_xy_m": null,
+      "stopping_path_m": 0.054090730215420706,
+      "stop_time_to_002_mps_s": 0.11900000000000022,
+      "yaw_coast_deg": 0.010876315748681026
+    },
+    "Q": {
+      "body_forward_mps": 0.010200764847350052,
+      "body_lateral_mps": -0.0009719990613090202,
+      "instantaneous_center_body_xy_m": [
+        0.00035540408845714664,
+        0.0037298323387840765
+      ],
+      "stopping_path_m": 0.0007423596166424201,
+      "stop_time_to_002_mps_s": 0.0,
+      "yaw_coast_deg": 3.8180126032090973
+    },
+    "E": {
+      "body_forward_mps": -0.01218114943377095,
+      "body_lateral_mps": -0.0015437112028146897,
+      "instantaneous_center_body_xy_m": [
+        -0.0004139212003474754,
+        0.0032661782761213135
+      ],
+      "stopping_path_m": 0.0006832130766094269,
+      "stop_time_to_002_mps_s": 0.0,
+      "yaw_coast_deg": -3.2838281138978473
+    },
+    "WA": {
+      "body_forward_mps": 0.1256824835930917,
+      "body_lateral_mps": -0.006781347943019194,
+      "instantaneous_center_body_xy_m": [
+        0.004250450499280732,
+        0.07877595717367941
+      ],
+      "stopping_path_m": 0.0026264649848602166,
+      "stop_time_to_002_mps_s": 0.034000000000000696,
+      "yaw_coast_deg": 1.5018714407239302
+    },
+    "WD": {
+      "body_forward_mps": 0.13277677924831516,
+      "body_lateral_mps": 0.00806841138512071,
+      "instantaneous_center_body_xy_m": [
+        0.004683602611387948,
+        -0.07707510689971918
+      ],
+      "stopping_path_m": 0.0038308529481723705,
+      "stop_time_to_002_mps_s": 0.03399999999999981,
+      "yaw_coast_deg": -2.3726304313977638
+    },
+    "SD": {
+      "body_forward_mps": -0.14553621268301098,
+      "body_lateral_mps": -0.010292890590801015,
+      "instantaneous_center_body_xy_m": [
+        -0.005238045554314595,
+        0.07406328718944474
+      ],
+      "stopping_path_m": 0.004276509689076052,
+      "stop_time_to_002_mps_s": 0.03399999999999981,
+      "yaw_coast_deg": -2.8805367673980187
+    },
+    "SA": {
+      "body_forward_mps": -0.13570278992805485,
+      "body_lateral_mps": 0.008437205655997121,
+      "instantaneous_center_body_xy_m": [
+        -0.0047659076037516596,
+        -0.07665416545923903
+      ],
+      "stopping_path_m": 0.0035460645315061917,
+      "stop_time_to_002_mps_s": 0.034000000000000696,
+      "yaw_coast_deg": 2.1198892970824725
+    }
+  },
+  "reset_feedback_fix": true,
+  "max_motor_torque_nm": 0.0784532,
   "translation_calibrated": false,
-  "long_term_drift_calibrated": false
+  "long_term_drift_calibrated": false,
+  "reset_native_regression": {
+    "resets": 6,
+    "status": "passed",
+    "checks": [
+      "wheel feedback remains available",
+      "straight forward",
+      "centre pivot",
+      "tight translating left and right arcs",
+      "W+A/W+Q equivalent",
+      "braking within 0.18 s"
+    ]
+  },
+  "reset_browser_regression": {
+    "resets": 6,
+    "status": "passed",
+    "checks": [
+      "real key chords",
+      "steering exceeds 120 degrees in 2.1 seconds",
+      "pivot stays near centre",
+      "less than 5 mm drift after 200 ms"
+    ]
+  }
 }

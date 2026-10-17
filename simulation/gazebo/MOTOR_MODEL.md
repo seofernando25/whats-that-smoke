@@ -129,3 +129,15 @@ wheel in front-left, front-right, rear-left, rear-right order:
 actual rad/s, target rad/s, output torque in N·m, effective voltage fraction.
 `/model/freenove/odometry` now reports simulated body/world odometry through
 Gazebo's OdometryPublisher, not ideal wheel-encoder integration.
+
+## Reset-safe feedback and zero-input braking
+
+Reset must recreate joint velocity requests; a retained empty/zero component
+can otherwise silently disable back EMF and braking. Powered torque is skipped
+while feedback is unavailable. A zero wheel command applies 0.06 N·m·s/rad
+damping plus 0.01 N·m estimated brake/geartrain resistance, limited by the
+reference stall torque and a one-step wheel-inertia cap. These are response
+estimates rather than measured electrical brake constants. The cap avoids
+a damping update reversing the wheel at low speed. Turn effort is refitted
+in `brake_effort_corrections.json`; steering holds its inside wheels while
+pivoting drives the two sides in opposite directions.

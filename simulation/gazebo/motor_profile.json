@@ -20,5 +20,7 @@
   "tire_slip_longitudinal_m_per_s_n_assumed": 0.0005,
   "tire_radial_stiffness_n_per_m_assumed": 5000.0,
   "tire_radial_damping_ns_per_m_assumed": 10.0,
-  "tire_radial_travel_m_assumed": 0.002
+  "tire_radial_travel_m_assumed": 0.002,
+  "brake_damping_nm_s_per_rad_assumed": 0.06,
+  "brake_resistance_nm_assumed": 0.01
 }

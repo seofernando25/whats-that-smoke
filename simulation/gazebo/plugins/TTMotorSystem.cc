@@ -12,6 +12,7 @@
 #include <gz/sim/Model.hh>
 #include <gz/sim/EntityComponentManager.hh>
 #include <gz/sim/components/JointVelocity.hh>
+#include <gz/sim/components/Inertial.hh>
 #include <gz/sim/components/JointForceCmd.hh>
 #include <gz/transport/Node.hh>
 
@@ -30,7 +31,8 @@ class TTMotorSystem final : public gz::sim::System,
   std::mutex mutex;
   double linear{0}, angular{0}, radius{.03175}, track{.12065};
   double stall{.0784532}, omega0{26.17994}, feedback{.06};
-  double integralGain{.6};
+  double integralGain{.6}, brakeDamping{.06}, brakeResistance{.01};
+  std::array<double,4> wheelInertia{{1e-5,1e-5,1e-5,1e-5}};
   double pwmLeft{0}, pwmRight{0}, leftVoltageGain{1.475}, rightVoltageGain{1.475};
   bool pwmMode{false};
   std::chrono::steady_clock::time_point lastCommand{};
@@ -51,7 +53,9 @@ class TTMotorSystem final : public gz::sim::System,
     omega0 = sdf->Get<double>("no_load_speed", omega0).first;
     feedback = sdf->Get<double>("velocity_feedback", feedback).first;
     integralGain = sdf->Get<double>("velocity_integral", integralGain).first;
-    if (radius <= 0 || track <= 0 || stall <= 0 || omega0 <= 0)
+    brakeDamping=sdf->Get<double>("brake_damping",brakeDamping).first;
+    brakeResistance=sdf->Get<double>("brake_resistance",brakeResistance).first;
+    if (radius <= 0 || track <= 0 || stall <= 0 || omega0 <= 0 || brakeDamping<0 || brakeResistance<0)
       throw std::runtime_error("TT motor parameters must be positive");
     leftVoltageGain=sdf->Get<double>("pwm_left_voltage_gain",leftVoltageGain).first;
     rightVoltageGain=sdf->Get<double>("pwm_right_voltage_gain",rightVoltageGain).first;
@@ -130,7 +134,13 @@ class TTMotorSystem final : public gz::sim::System,
     lastPub = {};
     for (auto j : joints)
       if (j != gz::sim::kNullEntity && ecm.HasEntity(j))
+      {
         ecm.SetComponentData<gz::sim::components::JointForceCmd>(j, {0.});
+        // Physics resets its velocity request bookkeeping. Recreate the
+        // request next PreUpdate instead of retaining a stale zero component.
+        ecm.RemoveComponent<gz::sim::components::JointVelocity>(j);
+      }
+    joints.fill(gz::sim::kNullEntity);
   }
 
   public: void PreUpdate(const gz::sim::UpdateInfo &info,
@@ -149,9 +159,19 @@ class TTMotorSystem final : public gz::sim::System,
         joints[i] = model.JointByName(ecm, names[i]);
         if (joints[i] == gz::sim::kNullEntity) return;
         ecm.CreateComponent(joints[i], gz::sim::components::JointVelocity());
+        auto wheel=model.LinkByName(ecm,names[i].substr(0,names[i].size()-6));
+        auto inertial=ecm.Component<gz::sim::components::Inertial>(wheel);
+        if(inertial) wheelInertia[i]=inertial->Data().MassMatrix().Iyy();
       }
       auto velocity = ecm.Component<gz::sim::components::JointVelocity>(joints[i]);
-      double omega = velocity && !velocity->Data().empty() ? velocity->Data()[0] : 0;
+      if(!velocity || velocity->Data().empty())
+      {
+        // Missing feedback is not zero measured speed. Never drive blind.
+        ecm.SetComponentData<gz::sim::components::JointForceCmd>(joints[i], {0.});
+        for(int k=0;k<4;++k) output.add_data(0.);
+        continue;
+      }
+      double omega = velocity->Data()[0];
       double side = i % 2 == 0 ? -1 : 1;
       double target = std::clamp((v + side*w*track/2)/radius, -omega0, omega0);
       // A velocity servo chooses effective voltage. The DC back-EMF relation
@@ -183,6 +203,16 @@ class TTMotorSystem final : public gz::sim::System,
         target=duty*omega0;
       }
       double torque = std::clamp(stall*(duty-omega/omega0), -stall, stall);
+      bool braking=direct ? std::abs(i%2==0 ? pl : pr)<1e-9 : target==0;
+      if(braking && dt>0)
+      {
+        // Real zero PWM is the H-bridge brake state, including the held inside
+        // wheels of an arc. Model gearbox/brake drag with finite resistance.
+        // The inertia cap prevents an explicit damping step reversing the wheel.
+        double resistance=std::min({stall,brakeDamping*std::abs(omega)+brakeResistance,
+                                   wheelInertia[i]*std::abs(omega)/dt});
+        torque=-std::copysign(resistance,omega);
+      }
       if (!std::isfinite(torque)) torque = 0;
       ecm.SetComponentData<gz::sim::components::JointForceCmd>(joints[i], {torque});
       output.add_data(omega);

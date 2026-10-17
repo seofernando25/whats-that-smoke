@@ -197,3 +197,15 @@ See `DYNAMICS.md` for rest-window bias correction, conditional translation
 estimates and limitations. Absolute position, speed scale and stopping distance
 remain unverified by an independent measurement. The car finished stopped and
 disarmed; calibration did not change the real controller's ownership/watchdog.
+
+## 2026-10-17 Reset feedback and steering correction
+
+A repeated-reset browser regression reproduced W+A travelling almost straight
+while raw wheel feedback remained zero. Reset now removes/recreates joint
+velocity requests and clears cached joint entities; missing feedback never
+gets treated as zero measured speed for powered actuation. Bounded zero-input
+gearbox/brake resistance also brakes the inside wheels of a steering arc.
+Refitted effort tables preserve the measured yaw response. Native and browser
+regressions each passed six resets, checking full steering geometry, pivot
+translation and prompt release braking. The tire friction coefficients were
+not changed. No new real-car driving trials were required for this correction.

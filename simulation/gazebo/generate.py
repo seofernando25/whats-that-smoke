@@ -112,6 +112,8 @@ def main():
     node(drive, 'wheel_separation', track)
     node(drive, 'wheel_radius', radius)
     node(drive,'stall_torque',motor['stall_nm'])
+    node(drive,'brake_damping',motor['brake_damping_nm_s_per_rad_assumed'])
+    node(drive,'brake_resistance',motor['brake_resistance_nm_assumed'])
     node(drive,'no_load_speed',motor['omega0'])
     node(drive,'velocity_feedback',motor['velocity_feedback_gain_assumed'])
     node(drive,'velocity_integral',motor['velocity_integral_gain_assumed'])

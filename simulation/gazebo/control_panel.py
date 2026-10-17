@@ -13,6 +13,10 @@ from urllib.error import URLError
 HERE = Path(__file__).resolve().parent
 
 class Handler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def log_message(self, *args):
         pass
 
@@ -46,6 +50,7 @@ class Handler(SimpleHTTPRequestHandler):
             if self.path == '/api/drive':
                 changed = self.server.bridge.control.drive(message['client'], message['seq'],
                                                           message['keys'], message['speed'], message.get('pwm'))
+                if changed:self.server.bridge.publish_command()
                 return self.reply({'accepted': changed})
             if self.path == '/api/action':
                 self.server.bridge.action(message['action'])

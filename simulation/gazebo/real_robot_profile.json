@@ -1,4 +1,66 @@
 {
+  "brake_effort_refit": {
+    "reason": "Re-fit drive effort after correcting reset velocity feedback and enabling bounded brake resistance on zero-command wheels.",
+    "brake_damping_nm_s_per_rad_assumed": 0.06,
+    "brake_resistance_nm_assumed": 0.01,
+    "source": "post-reset headless floor measurements at PWM1800; raw calibration/runs/brake-refit-basis.json",
+    "corrections": [
+      {
+        "keys": "Q",
+        "forward": 0,
+        "turn": 1,
+        "factor": 0.999991824414873,
+        "target_yaw_dps": 155.724730010526,
+        "baseline_yaw_dps": 155.72600316172134,
+        "baseline_effective_duty": 0.5559869638181433
+      },
+      {
+        "keys": "E",
+        "forward": 0,
+        "turn": -1,
+        "factor": 1.0576864148819225,
+        "target_yaw_dps": -200.3624575026106,
+        "baseline_yaw_dps": -189.4346515975423,
+        "baseline_effective_duty": 0.7078149496152178
+      },
+      {
+        "keys": "WA",
+        "forward": 1,
+        "turn": 1,
+        "factor": 0.7826226180091753,
+        "target_yaw_dps": 84.57038698624115,
+        "baseline_yaw_dps": 108.06023879219097,
+        "baseline_effective_duty": 0.6079993951542778
+      },
+      {
+        "keys": "WD",
+        "forward": 1,
+        "turn": -1,
+        "factor": 0.7337399935227984,
+        "target_yaw_dps": -99.66361750114541,
+        "baseline_yaw_dps": -135.8296104627541,
+        "baseline_effective_duty": 0.712527751694577
+      },
+      {
+        "keys": "SD",
+        "forward": -1,
+        "turn": -1,
+        "factor": 0.7554100415386326,
+        "target_yaw_dps": -110.56535922019708,
+        "baseline_yaw_dps": -146.36469353120538,
+        "baseline_effective_duty": 0.7804446185619178
+      },
+      {
+        "keys": "SA",
+        "forward": -1,
+        "turn": 1,
+        "factor": 0.7328006209944744,
+        "target_yaw_dps": 102.26137023832169,
+        "baseline_yaw_dps": 139.54869484082053,
+        "baseline_effective_duty": 0.7287115167618363
+      }
+    ]
+  },
   "pwm_rise_tau": [
     {
       "forward": 0,
@@ -475,7 +537,7 @@
       "forward": 0,
       "turn": 1,
       "pwm": 800,
-      "effective_duty": 0.09065939132710092,
+      "effective_duty": 0.09065865013352957,
       "target_yaw_dps": 21.87638604033252,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -484,7 +546,7 @@
       "forward": 0,
       "turn": 1,
       "pwm": 1300,
-      "effective_duty": 0.3152420573238144,
+      "effective_duty": 0.31523948003553914,
       "target_yaw_dps": 86.81497957097042,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -493,7 +555,7 @@
       "forward": 0,
       "turn": 1,
       "pwm": 1800,
-      "effective_duty": 0.5559869638181433,
+      "effective_duty": 0.5559824182993911,
       "target_yaw_dps": 155.724730010526,
       "source": "median of two held two-second floor trials; third repeat held out"
     },
@@ -529,7 +591,7 @@
       "forward": 0,
       "turn": -1,
       "pwm": 800,
-      "effective_duty": 0.12310260473523343,
+      "effective_duty": 0.13020395266503543,
       "target_yaw_dps": -30.53015089112298,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -538,7 +600,7 @@
       "forward": 0,
       "turn": -1,
       "pwm": 1300,
-      "effective_duty": 0.42249639966221103,
+      "effective_duty": 0.44686870225924386,
       "target_yaw_dps": -117.27798073128716,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -547,7 +609,7 @@
       "forward": 0,
       "turn": -1,
       "pwm": 1800,
-      "effective_duty": 0.7078149496152178,
+      "effective_duty": 0.7486462564583484,
       "target_yaw_dps": -200.3624575026106,
       "source": "median of two held two-second floor trials; third repeat held out"
     },
@@ -583,7 +645,7 @@
       "forward": 1,
       "turn": 1,
       "pwm": 800,
-      "effective_duty": 0.04803455652207001,
+      "effective_duty": 0.037592930380212136,
       "target_yaw_dps": 6.867806717795087,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -592,7 +654,7 @@
       "forward": 1,
       "turn": 1,
       "pwm": 1300,
-      "effective_duty": 0.2938710065103592,
+      "effective_duty": 0.2299900964721287,
       "target_yaw_dps": 42.05824264508217,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -601,7 +663,7 @@
       "forward": 1,
       "turn": 1,
       "pwm": 1800,
-      "effective_duty": 0.6079993951542778,
+      "effective_duty": 0.475834078383636,
       "target_yaw_dps": 84.57038698624115,
       "source": "median of two held two-second floor trials; third repeat held out"
     },
@@ -646,7 +708,7 @@
       "forward": 1,
       "turn": -1,
       "pwm": 1300,
-      "effective_duty": 0.5057099816162275,
+      "effective_duty": 0.37105963863550523,
       "target_yaw_dps": -71.32374134315522,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -655,7 +717,7 @@
       "forward": 1,
       "turn": -1,
       "pwm": 1800,
-      "effective_duty": 0.712527751694577,
+      "effective_duty": 0.522810107913193,
       "target_yaw_dps": -99.66361750114541,
       "source": "median of two held two-second floor trials; third repeat held out"
     },
@@ -691,7 +753,7 @@
       "forward": -1,
       "turn": 1,
       "pwm": 800,
-      "effective_duty": 0.11663939234257095,
+      "effective_duty": 0.08547341914105414,
       "target_yaw_dps": 16.67752632594326,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -700,7 +762,7 @@
       "forward": -1,
       "turn": 1,
       "pwm": 1300,
-      "effective_duty": 0.35584547666768784,
+      "effective_duty": 0.2607637862801564,
       "target_yaw_dps": 50.91236785006877,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -709,7 +771,7 @@
       "forward": -1,
       "turn": 1,
       "pwm": 1800,
-      "effective_duty": 0.7287115167618363,
+      "effective_duty": 0.534000252008899,
       "target_yaw_dps": 102.26137023832169,
       "source": "median of two held two-second floor trials; third repeat held out"
     },
@@ -745,7 +807,7 @@
       "forward": -1,
       "turn": -1,
       "pwm": 800,
-      "effective_duty": 0.09380889831433302,
+      "effective_duty": 0.07086418377232366,
       "target_yaw_dps": -13.412456129081145,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -754,7 +816,7 @@
       "forward": -1,
       "turn": -1,
       "pwm": 1300,
-      "effective_duty": 0.424490778973068,
+      "effective_duty": 0.32066459697681177,
       "target_yaw_dps": -60.26177920255725,
       "source": "short-pulse first-order asymptote estimate; not a sustained measurement"
     },
@@ -763,7 +825,7 @@
       "forward": -1,
       "turn": -1,
       "pwm": 1800,
-      "effective_duty": 0.7804446185619178,
+      "effective_duty": 0.5895557017264605,
       "target_yaw_dps": -110.56535922019708,
       "source": "median of two held two-second floor trials; third repeat held out"
     }

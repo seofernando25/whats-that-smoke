@@ -28,6 +28,8 @@ def main():
         dropped_samples=0,held_out_comparison=comparison,
         angular_MAE_dps=statistics.mean(r['absolute_error_dps'] for r in comparison),
         angular_MAPE_percent=statistics.mean(r['relative_error_percent'] for r in comparison),
+        motion_geometry_and_release={r['keys']:r.get('metrics') for r in simulation['results']},
+        reset_feedback_fix=True,
         max_motor_torque_nm=simulation['max_abs_torque_nm'],translation_calibrated=False,
         long_term_drift_calibrated=False)
     (ROOT/'simulation/gazebo/calibration_validation.json').write_text(json.dumps(summary,indent=2))
